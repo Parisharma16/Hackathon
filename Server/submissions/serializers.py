@@ -1,8 +1,6 @@
-"""Serializers for file submission creation and read operations."""
+"""Serializers for the Supabase-backed submission upload workflow."""
 
 from rest_framework import serializers
-
-from events.models import Event
 from submissions.models import Submission
 
 
@@ -15,14 +13,10 @@ MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 class SubmissionReadSerializer(serializers.ModelSerializer):
     """Read serializer for submission list and detail responses."""
 
-    event_title = serializers.CharField(source="event.title", read_only=True)
-
     class Meta:
         model = Submission
         fields = [
             "id",
-            "event",
-            "event_title",
             "submission_type",
             "file_url",
             "status",
@@ -30,37 +24,24 @@ class SubmissionReadSerializer(serializers.ModelSerializer):
         ]
 
 
-class SubmissionCreateSerializer(serializers.ModelSerializer):
+class SubmissionUploadSerializer(serializers.Serializer):
     """
-    Write serializer for student submission uploads.
+    Write serializer for the upload endpoint.
 
-    Validates file type and size so that unsupported uploads never reach disk.
+    Validates submission_type and the uploaded file before the view passes the
+    file to the Supabase storage service.
     """
 
-    class Meta:
-        model = Submission
-        fields = [
-            "event",
-            "submission_type",
-            "file_url",
-        ]
+    submission_type = serializers.ChoiceField(
+        choices=["certificate", "cgpa", "paper"]
+    )
+    file = serializers.FileField()
 
-    def validate_event(self, value):
-        """Ensure the referenced event actually exists."""
-        if not Event.objects.filter(id=value.id).exists():
-            raise serializers.ValidationError("Event not found.")
-        return value
-
-    def validate_file_url(self, file_obj):
-        """
-        Reject files that do not match the allowed extensions or exceed the
-        maximum upload size.
-        """
-        if file_obj is None:
-            raise serializers.ValidationError("A file must be provided.")
-
+    def validate_file(self, file_obj):
+        """Reject unsupported file types and oversized files."""
         file_name: str = getattr(file_obj, "name", "") or ""
         extension = file_name.rsplit(".", 1)[-1].lower() if "." in file_name else ""
+
         if extension not in ALLOWED_EXTENSIONS:
             raise serializers.ValidationError(
                 f"Unsupported file type '{extension}'. Allowed: {sorted(ALLOWED_EXTENSIONS)}"

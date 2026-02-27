@@ -12,7 +12,6 @@ from django.db import transaction
 from django.db.models import Sum
 
 from accounts.models import User
-from events.models import Event
 from points.models import LedgerEntryType, LedgerSource, Participation, ParticipationSource, PointLedger
 
 
@@ -28,25 +27,22 @@ def update_user_total_points(user: User) -> None:
     aggregate = PointLedger.objects.filter(user=user).aggregate(total=Sum("points"))
     total = aggregate["total"] or 0
     User.objects.filter(pk=user.pk).update(total_points=total)
-    # Refresh the in-memory instance so callers see the updated value.
     user.total_points = total
 
 
 @transaction.atomic
-def award_participation_points(user: User, event: Event, source: str) -> None:
+def award_participation_points(user: User, event, source: str) -> None:
     """
-    Create a participation record and a corresponding ledger entry, then refresh
-    total points.
+    Create a participation record and a corresponding ledger entry for an
+    event-based trigger (attendance or winner), then refresh total points.
 
     Args:
         user:   The student receiving points.
-        event:  The event that triggered the award.
-        source: One of ParticipationSource choices ('attendance' or 'submission').
+        event:  The Event ORM instance that triggered the award.
+        source: One of LedgerSource choices.
     """
-    # Map submission-style sources to the ledger source vocabulary.
     ledger_source_map: dict[str, str] = {
         "attendance": LedgerSource.ATTENDANCE,
-        "submission": LedgerSource.ATTENDANCE,  # generic fallback; callers may override
         "certificate": LedgerSource.CERTIFICATE,
         "cgpa": LedgerSource.CGPA,
         "paper": LedgerSource.PAPER,
@@ -60,7 +56,6 @@ def award_participation_points(user: User, event: Event, source: str) -> None:
 
     ledger_source = ledger_source_map.get(source, LedgerSource.ATTENDANCE)
 
-    # get_or_create prevents double awarding when called idempotently.
     Participation.objects.get_or_create(
         user=user,
         event=event,
@@ -68,7 +63,7 @@ def award_participation_points(user: User, event: Event, source: str) -> None:
         defaults={"verified": True},
     )
 
-    # Prevent creating a duplicate ledger entry for the same (user, event, source).
+    # Idempotency: skip if ledger entry already exists for this (user, event, source).
     already_awarded = PointLedger.objects.filter(
         user=user, event=event, source=ledger_source
     ).exists()
@@ -88,14 +83,13 @@ def award_participation_points(user: User, event: Event, source: str) -> None:
 
 
 @transaction.atomic
-def award_winner_points(event: Event) -> None:
+def award_winner_points(event) -> None:
     """
     Award winner-tier points to every user listed in event.winners_roll_nos.
 
-    Idempotency: if a winner ledger entry already exists for a (user, event)
-    pair with source='winner', it is skipped to prevent double-awarding.
+    Idempotent: skips users who already have a winner ledger entry for this event.
     """
-    from accounts.models import User as UserModel  # local import avoids circular
+    from accounts.models import User as UserModel
 
     winner_rolls: list[str] = event.winners_roll_nos or []
     if not winner_rolls:
@@ -122,23 +116,24 @@ def award_winner_points(event: Event) -> None:
 
 
 @transaction.atomic
-def approve_submission(submission, admin_user: User) -> None:
+def approve_submission(submission, admin_user: User, points: int) -> None:
     """
-    Process an admin-approved submission: create review record, award points,
-    and refresh totals.
+    Process an admin-approved standalone submission (certificate, cgpa, paper).
+
+    Points are provided explicitly by the admin (Option B). No event is
+    referenced since submissions are independent of events.
 
     Args:
         submission: The Submission ORM instance being approved.
         admin_user: The admin User performing the approval.
+        points:     Number of points to credit, entered by admin at review time.
     """
     from reviews.models import AdminReview
     from submissions.models import SubmissionStatus
 
-    # Update submission status.
     submission.status = SubmissionStatus.APPROVED
     submission.save(update_fields=["status"])
 
-    # Record the admin review decision.
     AdminReview.objects.create(
         submission=submission,
         reviewer=admin_user,
@@ -146,9 +141,39 @@ def approve_submission(submission, admin_user: User) -> None:
         remarks="Approved by admin",
     )
 
-    # Award points based on submission type.
-    source = submission.submission_type  # 'certificate', 'cgpa', or 'paper'
-    award_participation_points(user=submission.user, event=submission.event, source=source)
+    # Map submission type to ledger source.
+    source_map: dict[str, str] = {
+        "certificate": LedgerSource.CERTIFICATE,
+        "cgpa": LedgerSource.CGPA,
+        "paper": LedgerSource.PAPER,
+    }
+    ledger_source = source_map.get(submission.submission_type, LedgerSource.CERTIFICATE)
+
+    # Create standalone participation record (no event).
+    Participation.objects.get_or_create(
+        user=submission.user,
+        event=None,
+        source=ParticipationSource.SUBMISSION,
+        defaults={"verified": True},
+    )
+
+    # Idempotency: skip if submission was already credited.
+    already_credited = PointLedger.objects.filter(
+        user=submission.user,
+        event=None,
+        source=ledger_source,
+        reason__icontains=str(submission.id),
+    ).exists()
+    if not already_credited:
+        PointLedger.objects.create(
+            user=submission.user,
+            event=None,
+            entry_type=LedgerEntryType.CREDIT,
+            points=points,
+            reason=f"Submission approved: {submission.submission_type} (id={submission.id})",
+            source=ledger_source,
+        )
+        update_user_total_points(submission.user)
 
 
 @transaction.atomic

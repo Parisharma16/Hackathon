@@ -7,8 +7,8 @@ from submissions.models import Submission
 
 @admin.register(Submission)
 class SubmissionAdmin(admin.ModelAdmin):
-    list_display = ["user", "event", "submission_type", "status", "uploaded_at"]
+    list_display = ["user", "submission_type", "status", "uploaded_at"]
     list_filter = ["submission_type", "status", "uploaded_at"]
-    search_fields = ["user__roll_no", "user__email", "event__title"]
-    readonly_fields = ["uploaded_at"]
+    search_fields = ["user__roll_no", "user__email"]
+    readonly_fields = ["uploaded_at", "file_url"]
     ordering = ["-uploaded_at"]

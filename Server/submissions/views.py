@@ -1,28 +1,50 @@
-"""Views for student submission upload and personal submission listing."""
+"""Views for the Supabase-backed submission upload and student history."""
 
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
 
 from common.responses import api_response
 from submissions.models import Submission
-from submissions.serializers import SubmissionCreateSerializer, SubmissionReadSerializer
+from submissions.serializers import SubmissionReadSerializer, SubmissionUploadSerializer
+from submissions.storage import upload_file_to_supabase
 
 
-class SubmissionCreateView(APIView):
-    """Allow authenticated students to upload a new submission."""
+class SubmissionUploadView(APIView):
+    """
+    Single upload endpoint.
+
+    Accepts a file and submission_type, uploads the file to Supabase Storage,
+    and saves the returned public URL as a pending Submission row.
+    """
 
     permission_classes = [IsAuthenticated]
-    # MultiPartParser + FormParser are required to handle file uploads.
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
-        serializer = SubmissionCreateSerializer(data=request.data)
+        serializer = SubmissionUploadSerializer(data=request.data)
         if not serializer.is_valid():
             return api_response(False, "Validation failed.", serializer.errors, 400)
 
-        # Owner is always the authenticated user; never trust the request body.
-        submission = serializer.save(user=request.user)
+        file_obj = serializer.validated_data["file"]
+        submission_type = serializer.validated_data["submission_type"]
+
+        # Upload to Supabase and retrieve the public URL.
+        try:
+            public_url = upload_file_to_supabase(
+                file_obj=file_obj,
+                submission_type=submission_type,
+            )
+        except Exception as exc:
+            return api_response(False, f"File upload failed: {exc}", None, 500)
+
+        # Persist metadata. Owner is always the authenticated user.
+        submission = Submission.objects.create(
+            user=request.user,
+            submission_type=submission_type,
+            file_url=public_url,
+        )
+
         return api_response(
             True,
             "Submission uploaded successfully.",
@@ -32,14 +54,13 @@ class SubmissionCreateView(APIView):
 
 
 class MySubmissionsView(APIView):
-    """Return the authenticated user's own submission history."""
+    """Return all submissions belonging to the authenticated user."""
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         submissions = (
             Submission.objects.filter(user=request.user)
-            .select_related("event")
             .order_by("-uploaded_at")
         )
         return api_response(

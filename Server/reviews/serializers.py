@@ -3,7 +3,7 @@
 from rest_framework import serializers
 
 from reviews.models import AdminReview
-from submissions.models import Submission, SubmissionStatus
+from submissions.models import Submission
 from submissions.serializers import SubmissionReadSerializer
 
 
@@ -34,7 +34,19 @@ class PendingSubmissionReadSerializer(SubmissionReadSerializer):
         fields = SubmissionReadSerializer.Meta.fields + ["submitter_roll_no", "submitter_name"]
 
 
-class ReviewActionSerializer(serializers.Serializer):
-    """Write serializer for approve/reject action with optional remarks."""
+class ApproveActionSerializer(serializers.Serializer):
+    """
+    Write serializer for the approve action.
+
+    points is required and entered by the admin at review time (Option B).
+    remarks is optional.
+    """
+
+    points = serializers.IntegerField(min_value=1)
+    remarks = serializers.CharField(required=False, allow_blank=True, default="")
+
+
+class RejectActionSerializer(serializers.Serializer):
+    """Write serializer for the reject action with optional remarks."""
 
     remarks = serializers.CharField(required=False, allow_blank=True, default="")

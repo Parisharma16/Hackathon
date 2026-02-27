@@ -5,8 +5,6 @@ import uuid
 from django.conf import settings
 from django.db import models
 
-from events.models import Event
-
 
 class SubmissionType(models.TextChoices):
     """Type of evidence being submitted."""
@@ -26,16 +24,26 @@ class SubmissionStatus(models.TextChoices):
 
 class Submission(models.Model):
     """
-    Submission model aligned with the provided schema.
+    Standalone document verification submission.
 
-    Files are stored at MEDIA_ROOT; file_url holds the relative path.
+    Not tied to any event. file_url stores the Supabase public URL returned
+    after upload. event is kept nullable for schema compatibility.
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="submissions")
-    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="submissions")
+    # event is nullable because submissions are standalone document verifications,
+    # not tied to a specific event.
+    event = models.ForeignKey(
+        "events.Event",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="submissions",
+    )
     submission_type = models.CharField(max_length=20, choices=SubmissionType.choices, db_index=True)
-    file_url = models.FileField(upload_to="submissions/%Y/%m/")
+    # Stores the full Supabase public URL, e.g. https://xyz.supabase.co/storage/...
+    file_url = models.TextField()
     status = models.CharField(
         max_length=20,
         choices=SubmissionStatus.choices,
@@ -48,7 +56,6 @@ class Submission(models.Model):
         db_table = "submissions"
         indexes = [
             models.Index(fields=["user", "status"]),
-            models.Index(fields=["event"]),
         ]
 
     def __str__(self) -> str:

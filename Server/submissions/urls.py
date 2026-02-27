@@ -2,10 +2,10 @@
 
 from django.urls import path
 
-from submissions.views import MySubmissionsView, SubmissionCreateView
+from submissions.views import MySubmissionsView, SubmissionUploadView
 
 
 urlpatterns = [
-    path("", SubmissionCreateView.as_view(), name="submissions-create"),
+    path("upload/", SubmissionUploadView.as_view(), name="submissions-upload"),
     path("my/", MySubmissionsView.as_view(), name="submissions-my"),
 ]
