@@ -1,4 +1,7 @@
-// Server component — no state, pure presentational
+'use client';
+
+// Pure presentational component. Marked 'use client' because it calls new Date()
+// during render (for isPast), which must run on the client to avoid hydration mismatches.
 import Link from 'next/link';
 import type { Event, UserRole } from '@/lib/types';
 
