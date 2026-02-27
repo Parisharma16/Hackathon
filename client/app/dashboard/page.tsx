@@ -38,7 +38,7 @@ export default async function EventsPage() {
         )}
       </div>
 
-      {/* Interactive filter pills + event grid (Client Component) */}
+      {/* Filter state lives in DashboardContext — persists across navigation */}
       <EventsFilter events={events} userRole={userRole} userId={userId} />
     </div>
   );

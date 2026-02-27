@@ -4,10 +4,13 @@
  * Client component that owns the active-filter state and renders
  * the filter pills + filtered event grid.  Receives the full events
  * list from the parent Server Component so no extra fetch is needed.
+ *
+ * Filter state lives in DashboardContext (mounted at layout level) so it
+ * survives navigation to an event detail page and pressing Back.
  */
 
-import { useState } from 'react';
 import EventCard from '@/components/EventCard';
+import { useDashboardState } from '@/context/DashboardContext';
 import type { Event, EventType, UserRole } from '@/lib/types';
 
 type Filter = 'All' | EventType;
@@ -26,7 +29,7 @@ interface EventsFilterProps {
 }
 
 export default function EventsFilter({ events, userRole, userId }: EventsFilterProps) {
-  const [active, setActive] = useState<Filter>('All');
+  const { eventsFilter: active, setEventsFilter: setActive } = useDashboardState();
 
   const filtered = active === 'All'
     ? events
