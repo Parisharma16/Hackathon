@@ -63,25 +63,15 @@ export default async function EventDetailPage({
                 Organised by <span className="font-medium text-gray-700">{event.organized_by}</span>
               </p>
             </div>
-            <div className="text-right">
-              <span className="text-xl font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-xl block">
-                +{event.points_per_participant} pts
-              </span>
-              {event.winner_points > 0 && (
-                <span className="text-xs text-amber-600 bg-amber-50 px-3 py-1 rounded-lg block mt-1">
-                  🏆 Winner: +{event.winner_points} pts
-                </span>
-              )}
-            </div>
           </div>
 
           {/* Info grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             {[
-              { icon: '📅', label: 'Date',     value: eventDate.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) },
-              { icon: '📍', label: 'Location', value: event.location },
-              { icon: '🏛️', label: 'Organised By', value: event.organized_by },
-              { icon: '🎓', label: 'Created By',   value: `${event.created_by.name} (${event.created_by.roll_no})` },
+              { icon: '📅', label: 'Date',          value: eventDate.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) },
+              { icon: '📍', label: 'Location',      value: event.location },
+              { icon: '🏛️', label: 'Organised By',  value: event.organized_by },
+              { icon: '🎓', label: 'Created By',    value: `${event.created_by.name} (${event.created_by.roll_no})` },
             ].map(({ icon, label, value }) => (
               <div key={label} className="bg-gray-50 rounded-xl p-4">
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
@@ -90,6 +80,31 @@ export default async function EventDetailPage({
                 <p className="text-sm font-semibold text-gray-900">{value}</p>
               </div>
             ))}
+          </div>
+
+          {/* ── Points Allocation ───────────────────────────────────── */}
+          <div className="rounded-xl border border-blue-100 bg-blue-50 p-5 mb-6">
+            <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-3">
+              🎯 Points Allocation
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <div className="flex items-center gap-3 bg-white rounded-lg px-4 py-3 border border-blue-100 shadow-sm">
+                <span className="text-2xl">🎟️</span>
+                <div>
+                  <p className="text-xs text-gray-500 font-medium">Per Participant</p>
+                  <p className="text-xl font-extrabold text-blue-600">+{event.points_per_participant} pts</p>
+                </div>
+              </div>
+              {event.winner_points > 0 && (
+                <div className="flex items-center gap-3 bg-white rounded-lg px-4 py-3 border border-amber-100 shadow-sm">
+                  <span className="text-2xl">🏆</span>
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">Winner Bonus</p>
+                    <p className="text-xl font-extrabold text-amber-600">+{event.winner_points} pts</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Winners list (if any) */}
@@ -106,36 +121,26 @@ export default async function EventDetailPage({
             </div>
           )}
 
-          {/* Action buttons */}
-          <div className="flex flex-wrap gap-3">
-            {/* Upload certificate — any logged-in user */}
-            <Link
-              href={`/dashboard/student/upload?eventId=${event.id}`}
-              className="bg-gray-100 text-gray-800 px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-colors"
-            >
-              📄 Upload Certificate
-            </Link>
-
-            {/* Organiser / admin: Edit */}
-            {isOwner && (
+          {/* Action buttons — organiser/admin only (no upload certificate here) */}
+          {isOwner && (
+            <div className="flex flex-wrap gap-3">
               <Link
                 href={`/dashboard/events/${event.id}/edit`}
                 className="bg-gray-100 text-gray-800 px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-colors"
               >
                 ✏️ Edit Event
               </Link>
-            )}
 
-            {/* Organiser / admin: Mark Attendance (past events) */}
-            {isOwner && isPast && (
-              <Link
-                href={`/dashboard/organizer/capture?eventId=${event.id}`}
-                className="bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
-              >
-                📸 Mark Attendance
-              </Link>
-            )}
-          </div>
+              {isPast && (
+                <Link
+                  href={`/dashboard/organizer/capture?eventId=${event.id}`}
+                  className="bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
+                >
+                  📸 Mark Attendance
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

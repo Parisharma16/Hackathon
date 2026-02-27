@@ -7,13 +7,13 @@ export default function StudentUploadPage() {
   return (
     <div className="p-6 sm:p-8 max-w-2xl mx-auto space-y-8">
       <Link
-        href="/dashboard/student"
+        href="/dashboard/profile"
         className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
-        Back to Dashboard
+        Back to Profile
       </Link>
 
       <header>
