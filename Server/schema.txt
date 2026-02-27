@@ -1,0 +1,80 @@
+USERS
+-----
+id UUID PRIMARY KEY
+roll_no VARCHAR(20) UNIQUE NOT NULL
+name TEXT
+email TEXT UNIQUE
+password_hash TEXT
+role VARCHAR(20) CHECK (role IN ('student','admin','organizer'))
+year INT
+branch TEXT
+total_points INT DEFAULT 0
+created_at TIMESTAMP
+updated_at TIMESTAMP
+
+
+EVENTS
+------
+id UUID PRIMARY KEY
+title TEXT
+type VARCHAR(20) CHECK (type IN ('academic','cocurricular','extracurricular'))
+organized_by TEXT
+date DATE
+location TEXT
+points_per_participant INT
+winner_points INT
+winners_roll_nos TEXT[]
+created_by UUID REFERENCES users(id)
+created_at TIMESTAMP
+
+
+ATTENDANCES
+-----------
+id UUID PRIMARY KEY
+user_id UUID REFERENCES users(id)
+event_id UUID REFERENCES events(id)
+confidence FLOAT
+marked_at TIMESTAMP
+
+
+SUBMISSIONS
+-----------
+id UUID PRIMARY KEY
+user_id UUID REFERENCES users(id)
+event_id UUID REFERENCES events(id)
+submission_type VARCHAR(20) CHECK (submission_type IN ('certificate','cgpa','paper'))
+file_url TEXT
+status VARCHAR(20) CHECK (status IN ('pending','approved','rejected'))
+uploaded_at TIMESTAMP
+
+
+ADMIN_REVIEWS
+-------------
+id UUID PRIMARY KEY
+submission_id UUID REFERENCES submissions(id)
+reviewer_id UUID REFERENCES users(id)
+decision VARCHAR(20) CHECK (decision IN ('approved','rejected'))
+remarks TEXT
+reviewed_at TIMESTAMP
+
+
+PARTICIPATIONS
+--------------
+id UUID PRIMARY KEY
+user_id UUID REFERENCES users(id)
+event_id UUID REFERENCES events(id)
+source VARCHAR(20) CHECK (source IN ('attendance','submission'))
+verified BOOLEAN
+created_at TIMESTAMP
+
+
+POINT_LEDGER
+------------
+id UUID PRIMARY KEY
+user_id UUID REFERENCES users(id)
+event_id UUID REFERENCES events(id)
+entry_type VARCHAR(10) CHECK (entry_type IN ('credit','debit'))
+points INT
+reason TEXT
+source VARCHAR(20) CHECK (source IN ('attendance','winner','certificate','cgpa','paper'))
+created_at TIMESTAMP
