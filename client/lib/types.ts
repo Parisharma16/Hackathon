@@ -9,7 +9,7 @@ export type UserRole       = 'student' | 'organizer' | 'admin';
 export type EventType      = 'academic' | 'cocurricular' | 'extracurricular';
 export type SubmissionType = 'certificate' | 'cgpa' | 'paper';
 export type SubmissionStatus = 'pending' | 'approved' | 'rejected';
-export type PointSource    = 'attendance' | 'winner' | 'certificate' | 'cgpa' | 'paper';
+export type PointSource    = 'attendance' | 'winner' | 'certificate' | 'cgpa' | 'paper' | 'redemption';
 
 // ── API envelope ──────────────────────────────────────────────────────────────
 // Every DRF response is: { success, message, data }
@@ -150,7 +150,7 @@ export interface LeaderboardEntry {
   total_points: number;
 }
 
-// ── Shop (frontend-only feature; no backend endpoint yet) ─────────────────────
+// ── Shop ──────────────────────────────────────────────────────────────────────
 
 export interface ShopItem {
   id:          string;
@@ -158,6 +158,30 @@ export interface ShopItem {
   description: string;
   points_cost: number;
   category:    string;
-  image_url?:  string;
   stock:       number;
+  is_active?:  boolean;
+}
+
+/**
+ * A completed redemption record returned by:
+ *   GET  /shop/redemptions/my/
+ *   POST /shop/items/<id>/redeem/
+ */
+export interface Redemption {
+  id:            string;
+  item_id:       string;
+  item_name:     string;
+  item_category: string;
+  points_cost:   number;
+  /** Unique code the user presents to collect the reward. */
+  code:          string;
+  redeemed_at:   string;
+}
+
+/**
+ * Shape of the data field returned by POST /shop/items/<id>/redeem/.
+ * Extends Redemption with the user's updated point balance.
+ */
+export interface RedeemResult extends Redemption {
+  remaining_points: number;
 }
