@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192" fill="none">
+  <!-- Background -->
+  <rect width="192" height="192" rx="40" fill="#1a1a2e"/>
+
+  <!-- Graduation cap base (flat brim) -->
+  <polygon points="96,52 160,80 96,108 32,80" fill="#e2b96f"/>
+
+  <!-- Cap top knob -->
+  <rect x="88" y="44" width="16" height="12" rx="4" fill="#e2b96f"/>
+
+  <!-- Tassel string -->
+  <line x1="160" y1="80" x2="160" y2="110" stroke="#e2b96f" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="160" cy="115" r="6" fill="#e2b96f"/>
+
+  <!-- Standing collar / body under cap -->
+  <path d="M72 108 L72 132 Q96 148 120 132 L120 108 Q96 120 72 108Z" fill="#c9a050"/>
+
+  <!-- Star accent -->
+  <polygon points="96,62 99,72 110,72 101,79 104,89 96,83 88,89 91,79 82,72 93,72"
+           fill="#1a1a2e" opacity="0.6"/>
+</svg>

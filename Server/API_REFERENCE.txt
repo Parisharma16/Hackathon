@@ -1,0 +1,510 @@
+================================================================================
+  STUDENT ENGAGEMENT PLATFORM - API REFERENCE
+  Base URL: http://127.0.0.1:8000
+  All responses follow the format:
+    { "success": true/false, "message": "...", "data": ... }
+================================================================================
+
+AUTHENTICATION
+  All protected endpoints require the header:
+    Authorization: Bearer <access_token>
+
+  Token expires in 30 minutes. Use the refresh token to get a new access token.
+
+--------------------------------------------------------------------------------
+1. AUTH ENDPOINTS
+--------------------------------------------------------------------------------
+
+POST /auth/register/
+  Description : Register a new user account.
+  Auth        : None
+  Request Body:
+    {
+      "roll_no"  : "CS2101",          
+      "name"     : "Alice",           
+      "email"    : "alice@uni.edu",   
+      "password" : "securepass123",   
+      "role"     : "organizer",         
+      "year"     : 2,                 
+      "branch"   : "CSE"              
+    }
+  Success Response (201):
+    {
+      "success": true,
+      "message": "User registered successfully.",
+      "data": {
+        "id"           : "uuid",
+        "roll_no"      : "CS2101",
+        "name"         : "Alice",
+        "email"        : "alice@uni.edu",
+        "role"         : "student",
+        "year"         : 2,
+        "branch"       : "CSE",
+        "total_points" : 0,
+        "created_at"   : "2024-01-01T00:00:00Z",
+        "updated_at"   : "2024-01-01T00:00:00Z"
+      }
+    }
+  Error Response (400):
+    {
+      "success": false,
+      "message": "Validation failed.",
+      "data": { "email": ["This field must be unique."] }
+    }
+
+----------------------------------------
+
+POST /auth/login/
+  Description : Login with email and password, returns JWT token pair.
+  Auth        : None
+  Request Body:
+    {
+      "email"    : "alice@uni.edu",
+      "password" : "securepass123"
+    }
+  Success Response (200):
+    {
+      "success": true,
+      "message": "Login successful.",
+      "data": {
+        "access"  : "<access_token>",     -- use this in Authorization header
+        "refresh" : "<refresh_token>",    -- use this to get new access token
+        "user": {
+          "id"           : "uuid",
+          "roll_no"      : "CS2101",
+          "name"         : "Alice",
+          "email"        : "alice@uni.edu",
+          "role"         : "student",
+          "year"         : 2,
+          "branch"       : "CSE",
+          "total_points" : 150
+        }
+      }
+    }
+  Error Response (400):
+    {
+      "success": false,
+      "message": "Invalid credentials.",
+      "data": { "non_field_errors": ["Invalid email or password."] }
+    }
+
+----------------------------------------
+
+GET /auth/me/
+  Description : Get the currently logged-in user's profile.
+  Auth        : Required (any role)
+  Request Body: None
+  Success Response (200):
+    {
+      "success": true,
+      "message": "User profile fetched.",
+      "data": {
+        "id"           : "uuid",
+        "roll_no"      : "CS2101",
+        "name"         : "Alice",
+        "email"        : "alice@uni.edu",
+        "role"         : "student",
+        "year"         : 2,
+        "branch"       : "CSE",
+        "total_points" : 150,
+        "created_at"   : "2024-01-01T00:00:00Z",
+        "updated_at"   : "2024-01-01T00:00:00Z"
+      }
+    }
+
+--------------------------------------------------------------------------------
+2. EVENT ENDPOINTS
+--------------------------------------------------------------------------------
+
+GET /events/
+  Description : List all events ordered by date descending.
+  Auth        : None (public)
+  Request Body: None
+  Success Response (200):
+    {
+      "success": true,
+      "message": "Events fetched successfully.",
+      "data": [
+        {
+          "id"                   : "uuid",
+          "title"                : "Hackathon 2024",
+          "type"                 : "cocurricular",   -- academic | cocurricular | extracurricular
+          "organized_by"         : "CSE Department",
+          "date"                 : "2024-03-15",
+          "location"             : "Main Auditorium",
+          "points_per_participant": 50,
+          "winner_points"        : 200,
+          "winners_roll_nos"     : [],
+          "created_by": {
+            "id"     : "uuid",
+            "roll_no": "ORG001",
+            "name"   : "Organizer Name",
+            "email"  : "org@uni.edu",
+            "role"   : "organizer"
+          },
+          "created_at": "2024-01-01T00:00:00Z"
+        }
+      ]
+    }
+
+----------------------------------------
+
+POST /events/
+  Description : Create a new event.
+  Auth        : Required (organizer or admin only)
+  Request Body:
+    {
+      "title"                 : "Hackathon 2024",     -- required
+      "type"                  : "cocurricular",        -- required, choices: academic | cocurricular | extracurricular
+      "organized_by"          : "CSE Department",      -- required
+      "date"                  : "2024-03-15",          -- required, format: YYYY-MM-DD
+      "location"              : "Main Auditorium",     -- required
+      "points_per_participant": 50,                    -- required, integer
+      "winner_points"         : 200                   -- required, integer
+    }
+  Success Response (201):
+    {
+      "success": true,
+      "message": "Event created successfully.",
+      "data": { ...same as GET /events/ single object... }
+    }
+  Error Response (403):
+    {
+      "success": false,
+      "message": "You do not have permission to perform this action.",
+      "data": null
+    }
+
+----------------------------------------
+
+PATCH /events/{event_id}/winners/
+  Description : Set the list of winners for an event and award winner points.
+                NOTE: calling this multiple times will NOT double-award points.
+  Auth        : Required (organizer or admin only)
+  Request Body:
+    {
+      "winners_roll_nos": ["CS2101", "CS2102", "CS2103"]
+    }
+  Success Response (200):
+    {
+      "success": true,
+      "message": "Winners updated successfully.",
+      "data": { ...same as GET /events/ single object with updated winners_roll_nos... }
+    }
+  Error Response (404):
+    {
+      "success": false,
+      "message": "Event not found.",
+      "data": null
+    }
+
+--------------------------------------------------------------------------------
+3. ATTENDANCE ENDPOINTS
+--------------------------------------------------------------------------------
+
+POST /attendance/mark/
+  Description : Mark attendance for a list of students at an event.
+                The client collects roll numbers from the face recognition
+                microservice and sends them here.
+                Duplicate entries for the same student+event are silently skipped.
+  Auth        : Required (organizer or admin only)
+  Request Body:
+    {
+      "event_id"    : "uuid",
+      "roll_numbers": ["CS2101", "CS2102", "CS2103"]
+    }
+  Success Response (200):
+    {
+      "success": true,
+      "message": "Attendance processed successfully.",
+      "data": {
+        "marked_count"        : 3,    -- number of new attendance records created
+        "skipped_roll_numbers": []    -- duplicates or unknown rolls are listed here
+      }
+    }
+  Error Response (400):
+    {
+      "success": false,
+      "message": "Validation failed.",
+      "data": {
+        "roll_numbers": ["Unknown roll numbers: ['CS9999']"]
+      }
+    }
+
+----------------------------------------
+
+GET /attendance/my/
+  Description : Get attendance history for the logged-in student.
+  Auth        : Required (any role)
+  Request Body: None
+  Success Response (200):
+    {
+      "success": true,
+      "message": "Attendance history fetched.",
+      "data": [
+        {
+          "id"         : "uuid",
+          "event"      : "uuid",
+          "event_title": "Hackathon 2024",
+          "event_date" : "2024-03-15",
+          "event_type" : "cocurricular",
+          "marked_at"  : "2024-03-15T10:30:00Z"
+        }
+      ]
+    }
+
+--------------------------------------------------------------------------------
+4. SUBMISSION ENDPOINTS
+--------------------------------------------------------------------------------
+
+POST /submissions/upload/
+  Description : Upload a document for verification (certificate, CGPA, paper).
+                NOT tied to any event. File is stored in Supabase Storage.
+                Must be sent as multipart/form-data.
+  Auth        : Required (any role)
+  Request Body (multipart/form-data):
+    submission_type : "certificate"   -- required, choices: certificate | cgpa | paper
+    file            : <file>          -- required, allowed: pdf, jpg, jpeg, png, max 5MB
+  Success Response (201):
+    {
+      "success": true,
+      "message": "Submission uploaded successfully.",
+      "data": {
+        "id"             : "uuid",
+        "submission_type": "certificate",
+        "file_url"       : "https://xyz.supabase.co/storage/v1/object/public/submissions/certificate/abc123.pdf",
+        "status"         : "pending",
+        "uploaded_at"    : "2024-03-15T10:30:00Z"
+      }
+    }
+  Error Response (400) - wrong file type:
+    {
+      "success": false,
+      "message": "Validation failed.",
+      "data": {
+        "file": ["Unsupported file type 'docx'. Allowed: ['jpeg', 'jpg', 'pdf', 'png']"]
+      }
+    }
+  Error Response (500) - Supabase upload failure:
+    {
+      "success": false,
+      "message": "File upload failed: <error detail>",
+      "data": null
+    }
+
+----------------------------------------
+
+GET /submissions/my/
+  Description : Get all submissions made by the logged-in user.
+  Auth        : Required (any role)
+  Request Body: None
+  Success Response (200):
+    {
+      "success": true,
+      "message": "Submissions fetched.",
+      "data": [
+        {
+          "id"             : "uuid",
+          "submission_type": "certificate",
+          "file_url"       : "https://xyz.supabase.co/storage/v1/object/public/submissions/certificate/abc123.pdf",
+          "status"         : "pending",    -- pending | approved | rejected
+          "uploaded_at"    : "2024-03-15T10:30:00Z"
+        }
+      ]
+    }
+
+--------------------------------------------------------------------------------
+5. ADMIN SUBMISSION REVIEW ENDPOINTS
+--------------------------------------------------------------------------------
+
+GET /admin/submissions/pending/
+  Description : List all submissions that are awaiting review.
+  Auth        : Required (admin only)
+  Request Body: None
+  Success Response (200):
+    {
+      "success": true,
+      "message": "Pending submissions fetched.",
+      "data": [
+        {
+          "id"              : "uuid",
+          "event"           : "uuid",
+          "event_title"     : "Hackathon 2024",
+          "submission_type" : "certificate",
+          "file_url"        : "/media/submissions/2024/03/filename.pdf",
+          "status"          : "pending",
+          "uploaded_at"     : "2024-03-15T10:30:00Z",
+          "submitter_roll_no": "CS2101",
+          "submitter_name"  : "Alice"
+        }
+      ]
+    }
+
+----------------------------------------
+
+POST /admin/submissions/{submission_id}/approve/
+  Description : Approve a pending submission.
+                Admin MUST provide the points to award (Option B manual points).
+                Idempotent - approving twice will not double-award points.
+  Auth        : Required (admin only)
+  Request Body:
+    {
+      "points" : 40,                   -- required, integer, min 1
+      "remarks": "Good submission."    -- optional
+    }
+  Success Response (200):
+    {
+      "success": true,
+      "message": "Submission approved successfully.",
+      "data": null
+    }
+  Error Response (400) - already reviewed:
+    {
+      "success": false,
+      "message": "Submission is not in pending state.",
+      "data": null
+    }
+  Error Response (404):
+    {
+      "success": false,
+      "message": "Submission not found.",
+      "data": null
+    }
+
+----------------------------------------
+
+POST /admin/submissions/{submission_id}/reject/
+  Description : Reject a pending submission. No points are awarded.
+  Auth        : Required (admin only)
+  Request Body:
+    {
+      "remarks": "Insufficient evidence."    -- optional
+    }
+  Success Response (200):
+    {
+      "success": true,
+      "message": "Submission rejected.",
+      "data": null
+    }
+  Error Response (400) - already reviewed:
+    {
+      "success": false,
+      "message": "Submission is not in pending state.",
+      "data": null
+    }
+
+--------------------------------------------------------------------------------
+6. POINTS ENDPOINTS
+--------------------------------------------------------------------------------
+
+GET /points/my/
+  Description : Get the logged-in user's total points and full ledger history.
+  Auth        : Required (any role)
+  Request Body: None
+  Success Response (200):
+    {
+      "success": true,
+      "message": "Points history fetched.",
+      "data": {
+        "total_points": 250,
+        "ledger": [
+          {
+            "id"         : "uuid",
+            "event"      : "uuid",
+            "event_title": "Hackathon 2024",
+            "entry_type" : "credit",          -- credit | debit
+            "points"     : 50,
+            "reason"     : "Participation in Hackathon 2024 via attendance",
+            "source"     : "attendance",       -- attendance | winner | certificate | cgpa | paper
+            "created_at" : "2024-03-15T10:30:00Z"
+          },
+          {
+            "id"         : "uuid",
+            "event"      : "uuid",
+            "event_title": "Hackathon 2024",
+            "entry_type" : "credit",
+            "points"     : 200,
+            "reason"     : "Winner of Hackathon 2024",
+            "source"     : "winner",
+            "created_at" : "2024-03-15T12:00:00Z"
+          }
+        ]
+      }
+    }
+
+----------------------------------------
+
+GET /points/leaderboard/
+  Description : Get all students ranked by total points descending.
+  Auth        : None (public)
+  Request Body: None
+  Success Response (200):
+    {
+      "success": true,
+      "message": "Leaderboard fetched.",
+      "data": [
+        {
+          "id"           : "uuid",
+          "roll_no"      : "CS2101",
+          "name"         : "Alice",
+          "branch"       : "CSE",
+          "year"         : 2,
+          "total_points" : 250
+        },
+        {
+          "id"           : "uuid",
+          "roll_no"      : "CS2102",
+          "name"         : "Bob",
+          "branch"       : "ECE",
+          "year"         : 3,
+          "total_points" : 150
+        }
+      ]
+    }
+
+================================================================================
+  NOTES FOR FRONTEND
+================================================================================
+
+1. TOKEN STORAGE
+   Store the access token in memory or localStorage.
+   Store the refresh token in an httpOnly cookie if possible (more secure).
+
+2. TOKEN REFRESH
+   When any request returns 401, call SimpleJWT's built-in refresh endpoint:
+     POST /auth/token/refresh/
+     Body: { "refresh": "<refresh_token>" }
+   This is provided by djangorestframework-simplejwt automatically.
+   NOTE: This endpoint is not prefixed under /auth/ in the current config.
+   Use: POST http://127.0.0.1:8000/api/token/refresh/
+   (Ask backend to confirm the exact mount path if needed.)
+
+3. FILE UPLOADS
+   Use Content-Type: multipart/form-data for POST /submissions/.
+   Do NOT use application/json for file uploads.
+
+4. ROLE MATRIX - who can call what
+   Endpoint                              student   organizer   admin
+   GET /events/                            YES       YES        YES
+   POST /events/                           NO        YES        YES
+   PATCH /events/{id}/winners/             NO        YES        YES
+   POST /attendance/mark/                  NO        YES        YES
+   GET /attendance/my/                     YES       YES        YES
+   POST /submissions/upload/               YES       YES        YES
+   GET /submissions/my/                    YES       YES        YES
+   GET /admin/submissions/pending/         NO        NO         YES
+   POST /admin/submissions/{id}/approve/   NO        NO         YES
+   POST /admin/submissions/{id}/reject/    NO        NO         YES
+   GET /points/my/                         YES       YES        YES
+   GET /points/leaderboard/                YES       YES        YES
+
+5. POINT AWARD RULES
+   Attendance marked           -> points_per_participant (auto, no approval)
+   Submission approved         -> points entered by admin at approval time
+   Winner declared             -> winner_points (when PATCH /events/{id}/winners/ called)
+   All operations are idempotent - repeated calls will NOT create duplicate points.
+
+6. UUID FORMAT
+   All IDs are UUID v4 strings, e.g.: "550e8400-e29b-41d4-a716-446655440000"
+
+================================================================================
