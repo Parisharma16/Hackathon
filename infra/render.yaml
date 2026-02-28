@@ -1,8 +1,11 @@
 services:
   - type: web
-    name: chromadb-service
-    env: docker
-    repo: https://github.com/Parisharma16/Hackathon
-    branch: Server
+    name: face-attendance-service
+    runtime: python
     plan: free
     region: singapore
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: CTX_ID
+        value: "-1"
