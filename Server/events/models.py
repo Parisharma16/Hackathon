@@ -27,6 +27,8 @@ class Event(models.Model):
     type = models.CharField(max_length=20, choices=EventType.choices, db_index=True)
     organized_by = models.TextField()
     date = models.DateField(db_index=True)
+    # Optional start time for the event. Stored as HH:MM:SS; null means TBD.
+    time = models.TimeField(null=True, blank=True)
     location = models.TextField()
     points_per_participant = models.IntegerField()
     winner_points = models.IntegerField()

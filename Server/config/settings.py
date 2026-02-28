@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # django.contrib.postgres is required for ArrayField (events.winners_roll_nos).
     "django.contrib.postgres",
+    "corsheaders",
     "rest_framework",
     "rest_framework_simplejwt",
     "accounts",
@@ -55,6 +56,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    # CorsMiddleware must appear before any middleware that can generate responses
+    # (i.e. before CommonMiddleware) so that CORS headers are added to every response.
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -149,3 +153,16 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+# CORS - allow the Next.js frontend to call the API across origins.
+# Set CORS_ALLOWED_ORIGINS as a comma-separated list in .env for production.
+# Example: CORS_ALLOWED_ORIGINS=https://myapp.vercel.app,http://localhost:3000
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+    if origin.strip()
+]
+
+# The frontend sends JWT tokens via the Authorization header, not cookies,
+# so cross-origin credentials are not required.
+CORS_ALLOW_CREDENTIALS = False

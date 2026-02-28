@@ -40,20 +40,32 @@ interface EventCardProps {
   userId?:   string;
 }
 
+/**
+ * Format a "HH:MM:SS" or "HH:MM" time string from the backend into
+ * a readable "H:MM AM/PM" label.
+ */
+function formatTime(time: string): string {
+  const [h, m] = time.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
 export default function EventCard({ event, userRole, userId }: EventCardProps) {
   const config  = TYPE_CONFIG[event.type] ?? TYPE_CONFIG.academic;
   const isOwner = userRole === 'organizer' && event.created_by.id === userId;
 
-  const eventDate = new Date(event.date);
+  const eventDate = new Date(event.date + 'T00:00:00');
   const datePart  = eventDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-  const timePart  = eventDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase();
+  // Only show time when the backend has an actual time value set.
+  const timePart  = event.time ? formatTime(event.time) : null;
 
   return (
     <article className="rounded-3xl overflow-hidden shadow-lg bg-[#1c1c2e] flex flex-col">
       {/* ── Image section ── */}
       <div className="relative h-44">
         <Image
-          src={config.image}
+          src={event.banner_url || config.image}
           alt={event.title}
           fill
           className="object-cover"
@@ -85,7 +97,7 @@ export default function EventCard({ event, userRole, userId }: EventCardProps) {
             <rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="2" />
             <path d="M16 2v4M8 2v4M3 10h18" strokeWidth="2" strokeLinecap="round" />
           </svg>
-          <span>{datePart} • {timePart}</span>
+          <span>{datePart}{timePart ? ` • ${timePart}` : ''}</span>
         </div>
 
         {/* Location */}

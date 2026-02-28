@@ -1,10 +1,19 @@
 // app/dashboard/events/[id]/page.tsx
 // GET /events/{id}/
 import { cookies } from 'next/headers';
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { fetchEvent } from '@/lib/api';
 import type { UserRole } from '@/lib/types';
+
+/** Format "HH:MM:SS" or "HH:MM" from the backend into "H:MM AM/PM". */
+function formatTime(time: string): string {
+  const [h, m] = time.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2, '0')} ${ampm}`;
+}
 
 const TYPE_STYLE: Record<string, { bar: string; badge: string; text: string }> = {
   academic:        { bar: 'bg-blue-500',   badge: 'bg-blue-50',   text: 'text-blue-700'   },
@@ -32,7 +41,8 @@ export default async function EventDetailPage({
   const userId   = cookieStore.get('user_id')?.value;
 
   const isOwner   = (userRole === 'organizer' || userRole === 'admin') && event.created_by.id === userId;
-  const eventDate = new Date(event.date);
+  // Append T00:00:00 so the date string is parsed as local midnight, not UTC midnight
+  const eventDate = new Date(event.date + 'T00:00:00');
   const isPast    = eventDate < new Date();
   const style     = TYPE_STYLE[event.type] ?? TYPE_STYLE.academic;
 
@@ -49,7 +59,24 @@ export default async function EventDetailPage({
       </Link>
 
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className={`${style.bar} h-2`} />
+        {event.banner_url ? (
+          /* Show the uploaded banner image when available */
+          <div className="relative h-52 sm:h-64 w-full">
+            <Image
+              src={event.banner_url}
+              alt={`${event.title} banner`}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 768px"
+              priority
+            />
+            {/* Keep the colour bar as a thin bottom accent over the image */}
+            <div className={`absolute bottom-0 left-0 right-0 h-1 ${style.bar}`} />
+          </div>
+        ) : (
+          /* Fallback: coloured accent bar when no banner is set */
+          <div className={`${style.bar} h-2`} />
+        )}
 
         <div className="p-6 sm:p-8">
           {/* Header */}
@@ -68,10 +95,18 @@ export default async function EventDetailPage({
           {/* Info grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             {[
-              { label: 'Date',          value: eventDate.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) },
-              { label: 'Location',      value: event.location },
-              { label: 'Organised By',  value: event.organized_by },
-              { label: 'Created By',    value: `${event.created_by.name} (${event.created_by.roll_no})` },
+              {
+                label: 'Date',
+                value: eventDate.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+              },
+              // Only include the Time card when a time is actually set
+              ...(event.time
+                ? [{ label: 'Time', value: formatTime(event.time) }]
+                : []
+              ),
+              { label: 'Location',     value: event.location },
+              { label: 'Organised By', value: event.organized_by },
+              { label: 'Created By',   value: `${event.created_by.name} (${event.created_by.roll_no})` },
             ].map(({ label, value }) => (
               <div key={label} className="bg-gray-50 rounded-xl p-4">
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">

@@ -8,7 +8,7 @@
  * The `unwrap` helper throws on failure and returns `data` on success.
  */
 
-import { getStoredToken } from '@/lib/auth';
+import { getStoredToken, refreshAccessToken, clearTokens } from '@/lib/auth';
 import type {
   Event,
   CreateEventPayload,
@@ -33,13 +33,37 @@ export const API_BASE =
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
-/** Build Authorization + optional extra headers. */
-function authHeaders(extra?: Record<string, string>): Record<string, string> {
-  const token = getStoredToken();
-  return {
+/**
+ * Perform an authenticated fetch.
+ * Attaches the current JWT access token as a Bearer header.
+ * On a 401 response, attempts a single token refresh and retries.
+ * If the refresh also fails, clears all auth cookies and returns the 401 response
+ * so the caller can propagate the error naturally.
+ *
+ * Pass any extra headers (e.g. Content-Type) in init.headers; do NOT manually
+ * include Authorization — this function handles that.
+ */
+async function authorizedFetch(input: string, init: RequestInit = {}): Promise<Response> {
+  const buildHeaders = (token: string | null): Record<string, string> => ({
+    ...(init.headers as Record<string, string> | undefined ?? {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...extra,
-  };
+  });
+
+  const firstResponse = await fetch(input, { ...init, headers: buildHeaders(getStoredToken()) });
+
+  // Happy path — return immediately for any non-401 status.
+  if (firstResponse.status !== 401) return firstResponse;
+
+  // Access token has expired — attempt a refresh and retry once.
+  const newToken = await refreshAccessToken();
+  if (!newToken) {
+    // Refresh token is missing or rejected; wipe stale cookies so the
+    // middleware will redirect to /login on the next navigation.
+    clearTokens();
+    return firstResponse;
+  }
+
+  return fetch(input, { ...init, headers: buildHeaders(newToken) });
 }
 
 /**
@@ -76,9 +100,7 @@ async function tryUnwrap<T>(res: Response): Promise<T | null> {
 /** GET /auth/me/ — fetch the currently logged-in user's profile. */
 export async function fetchCurrentUser(): Promise<User | null> {
   try {
-    const res = await fetch(`${API_BASE}/auth/me/`, {
-      headers: authHeaders(),
-    });
+    const res = await authorizedFetch(`${API_BASE}/auth/me/`);
     if (!res.ok) return null;
     return await tryUnwrap<User>(res);
   } catch {
@@ -87,6 +109,15 @@ export async function fetchCurrentUser(): Promise<User | null> {
 }
 
 // ── Events ────────────────────────────────────────────────────────────────────
+
+/** GET /events/{id}/ — public, returns a single event or null if not found. */
+export async function fetchEvent(id: string): Promise<Event | null> {
+  try {
+    const res = await fetch(`${API_BASE}/events/${id}/`);
+    if (res.ok) return await tryUnwrap<Event>(res);
+  } catch { /* fall through */ }
+  return MOCK_EVENTS.find((e) => e.id === id) ?? null;
+}
 
 /** GET /events/ — public, no auth required. */
 export async function fetchEvents(): Promise<Event[]> {
@@ -100,20 +131,44 @@ export async function fetchEvents(): Promise<Event[]> {
   return MOCK_EVENTS;
 }
 
-/** GET /events/{id}/ */
-export async function fetchEvent(id: string): Promise<Event | null> {
-  try {
-    const res = await fetch(`${API_BASE}/events/${id}/`);
-    if (res.ok) return await tryUnwrap<Event>(res);
-  } catch { /* fall through */ }
-  return MOCK_EVENTS.find((e) => e.id === id) ?? null;
-}
-
 /** POST /events/ — organizer/admin only. */
 export async function createEvent(payload: CreateEventPayload): Promise<Event> {
-  const res = await fetch(`${API_BASE}/events/`, {
+  const res = await authorizedFetch(`${API_BASE}/events/`, {
     method: 'POST',
-    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return unwrap<Event>(res);
+}
+
+/**
+ * POST /events/upload-banner/
+ * Uploads an image file to Supabase via the backend and returns the public URL.
+ * No database record is created — the returned URL is then passed as banner_url
+ * when creating or patching an event.
+ * Accepts jpg, jpeg, png, webp up to 5 MB.
+ */
+export async function uploadEventBanner(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  // Do not set Content-Type — the browser must set the multipart boundary.
+  const res = await authorizedFetch(`${API_BASE}/events/upload-banner/`, {
+    method: 'POST',
+    body: formData,
+  });
+  const data = await unwrap<{ url: string }>(res);
+  return data.url;
+}
+
+/**
+ * PATCH /events/{id}/ — organizer/admin only.
+ * Partial update: only the fields present in payload are changed.
+ */
+export async function updateEvent(id: string, payload: Partial<CreateEventPayload>): Promise<Event> {
+  const res = await authorizedFetch(`${API_BASE}/events/${id}/`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
   return unwrap<Event>(res);
@@ -127,9 +182,9 @@ export async function setEventWinners(
   eventId: string,
   winnersRollNos: string[],
 ): Promise<Event> {
-  const res = await fetch(`${API_BASE}/events/${eventId}/winners/`, {
+  const res = await authorizedFetch(`${API_BASE}/events/${eventId}/winners/`, {
     method: 'PATCH',
-    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ winners_roll_nos: winnersRollNos }),
   });
   return unwrap<Event>(res);
@@ -146,9 +201,9 @@ export async function markAttendance(
   eventId: string,
   rollNumbers: string[],
 ): Promise<MarkAttendanceResponse> {
-  const res = await fetch(`${API_BASE}/attendance/mark/`, {
+  const res = await authorizedFetch(`${API_BASE}/attendance/mark/`, {
     method: 'POST',
-    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ event_id: eventId, roll_numbers: rollNumbers }),
   });
   return unwrap<MarkAttendanceResponse>(res);
@@ -157,23 +212,21 @@ export async function markAttendance(
 // ── Submissions ───────────────────────────────────────────────────────────────
 
 /**
- * POST /submissions/
+ * POST /submissions/upload/
  * Upload a certificate / CGPA document / paper for admin review.
- * Must be multipart/form-data — do NOT set Content-Type manually (browser handles boundary).
+ * Must be multipart/form-data — do NOT set Content-Type manually (browser sets boundary).
  */
 export async function createSubmission(
-  eventId: string,
   submissionType: 'certificate' | 'cgpa' | 'paper',
   file: File,
 ): Promise<Submission> {
   const formData = new FormData();
-  formData.append('event', eventId);
   formData.append('submission_type', submissionType);
-  formData.append('file_url', file);   // field name per API spec
+  formData.append('file', file);
 
-  const res = await fetch(`${API_BASE}/submissions/`, {
+  // Do not include Content-Type here; the browser must set the multipart boundary.
+  const res = await authorizedFetch(`${API_BASE}/submissions/upload/`, {
     method: 'POST',
-    headers: authHeaders(), // no Content-Type — browser sets multipart boundary
     body: formData,
   });
   return unwrap<Submission>(res);
@@ -182,9 +235,7 @@ export async function createSubmission(
 /** GET /submissions/my/ — submissions made by the logged-in user. */
 export async function fetchMySubmissions(): Promise<Submission[]> {
   try {
-    const res = await fetch(`${API_BASE}/submissions/my/`, {
-      headers: authHeaders(),
-    });
+    const res = await authorizedFetch(`${API_BASE}/submissions/my/`);
     if (res.ok) {
       const data = await tryUnwrap<Submission[]>(res);
       if (data) return data;
@@ -198,9 +249,7 @@ export async function fetchMySubmissions(): Promise<Submission[]> {
 /** GET /admin/submissions/pending/ — admin only. */
 export async function fetchPendingSubmissions(): Promise<PendingSubmission[]> {
   try {
-    const res = await fetch(`${API_BASE}/admin/submissions/pending/`, {
-      headers: authHeaders(),
-    });
+    const res = await authorizedFetch(`${API_BASE}/admin/submissions/pending/`);
     if (res.ok) {
       const data = await tryUnwrap<PendingSubmission[]>(res);
       if (data) return data;
@@ -214,9 +263,7 @@ export async function fetchPendingSubmissions(): Promise<PendingSubmission[]> {
 /** GET /points/my/ — total points + full ledger history. */
 export async function fetchMyPoints(): Promise<PointsData> {
   try {
-    const res = await fetch(`${API_BASE}/points/my/`, {
-      headers: authHeaders(),
-    });
+    const res = await authorizedFetch(`${API_BASE}/points/my/`);
     if (res.ok) {
       const data = await tryUnwrap<PointsData>(res);
       if (data) return data;

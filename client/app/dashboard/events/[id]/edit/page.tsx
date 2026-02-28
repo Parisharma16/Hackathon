@@ -1,20 +1,11 @@
 // app/dashboard/events/[id]/edit/page.tsx
 // Organiser-only: edit an existing event.
+// Fetches event data server-side via GET /events/{id}/ and renders EventForm
+// in edit mode. Submission goes to PATCH /events/{id}/ via updateEvent().
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import EventForm from '@/components/EventForm';
-import { MOCK_EVENTS } from '@/lib/mock-data';
-import type { Event } from '@/lib/types';
-
-const DRF_API_URL = process.env.DRF_API_URL || 'http://localhost:8000/api';
-
-async function getEvent(id: string): Promise<Event | null> {
-  try {
-    const res = await fetch(`${DRF_API_URL}/events/${id}/`);
-    if (res.ok) return res.json();
-  } catch { /* fall through */ }
-  return MOCK_EVENTS.find((e) => e.id === id) ?? null;
-}
+import { fetchEvent } from '@/lib/api';
 
 export default async function EditEventPage({
   params,
@@ -22,7 +13,9 @@ export default async function EditEventPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const event = await getEvent(id);
+  // fetchEvent unwraps the { success, message, data } envelope and falls back
+  // to mock data when the server is unreachable.
+  const event = await fetchEvent(id);
   if (!event) notFound();
 
   return (
@@ -40,7 +33,8 @@ export default async function EditEventPage({
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Edit Event</h1>
         <p className="text-gray-500 text-sm mb-8">
-          Update the details for <span className="font-medium text-gray-700">{event.title}</span>.
+          Update the details for{' '}
+          <span className="font-medium text-gray-700">{event.title}</span>.
         </p>
         <EventForm event={event} />
       </div>

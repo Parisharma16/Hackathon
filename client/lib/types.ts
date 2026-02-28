@@ -31,6 +31,8 @@ export interface User {
   year?:        number;
   branch?:      string;
   total_points: number;
+  /** Supabase public URL set by the client at registration time. Null when not uploaded. */
+  profile_pic?: string | null;
   created_at?:  string;
   updated_at?:  string;
 }
@@ -58,23 +60,31 @@ export interface Event {
   type:                  EventType;
   organized_by:          string;
   date:                  string;   // "YYYY-MM-DD"
+  /** Optional start time returned as "HH:MM:SS" by the backend. Null when not set. */
+  time?:                 string | null;
   location:              string;
   points_per_participant: number;
   winner_points:         number;
   winners_roll_nos:      string[];
+  /** Supabase public URL for the event banner image. Null when not uploaded. */
+  banner_url?:           string | null;
   created_by:            EventCreator;
   created_at:            string;
 }
 
-/** Payload for POST /events/ */
+/** Payload for POST /events/ and PATCH /events/{id}/ */
 export interface CreateEventPayload {
   title:                 string;
   type:                  EventType;
   organized_by:          string;
   date:                  string;   // "YYYY-MM-DD"
+  /** Optional start time in "HH:MM" format (from <input type="time">). */
+  time?:                 string;
   location:              string;
   points_per_participant: number;
   winner_points:         number;
+  /** Optional Supabase public URL — set automatically after banner upload. */
+  banner_url?:           string;
 }
 
 // ── Attendance ────────────────────────────────────────────────────────────────
