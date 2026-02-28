@@ -159,7 +159,7 @@ export default function EventsFilter({ events, userRole, userId }: EventsFilterP
         >
           <IconSliders />
           {activeAdvCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-violet-600 text-white text-[10px] font-bold flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-purple-400 text-white text-[10px] font-bold flex items-center justify-center">
               {activeAdvCount}
             </span>
           )}

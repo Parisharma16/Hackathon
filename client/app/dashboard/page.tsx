@@ -20,14 +20,6 @@ export default async function EventsPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
-      {/* ── Hero banner ──────────────────────────────────────────────────── */}
-      {/*
-        mt-14 gives vertical breathing room above the card so the image can
-        sit with absolute top: -3.5rem (negative), physically above the card's
-        top edge. The card itself has overflow-hidden only for its own bg —
-        the image is a sibling, so it's never clipped by the card.
-      */}
       <div className="relative mt-10">
 
         {/* Purple card — overflow-hidden clips only its own bg */}

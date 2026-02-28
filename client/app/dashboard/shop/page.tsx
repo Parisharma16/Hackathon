@@ -13,6 +13,7 @@
 import ShopClient from './ShopClient';
 import { fetchShopItems } from '@/lib/api';
 import { serverUnwrap } from '@/lib/server-fetch';
+import Image from 'next/image';
 import type { PointsData, Redemption } from '@/lib/types';
 
 export default async function ShopPage() {
@@ -27,9 +28,36 @@ export default async function ShopPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Rewards Shop</h1>
-        <p className="text-gray-500 mt-1">Redeem your hard-earned points for exclusive rewards</p>
+      <div className="relative mt-10 mb-4">
+      <div className="relative overflow-hidden rounded-3xl bg-[#fdeab5] min-h-[170px] flex items-center">
+          {/* Text */}
+          <div className="relative z-10 px-7 py-7 max-w-[58%]">
+            
+            <h1 className="text-3xl sm:text-4xl font-black text-gray-900 leading-tight">
+              Shop
+            </h1>
+            <p className="text-yellow-800 text-sm mt-2 font-medium">
+              Redeem your hard-earned points for exclusive rewards
+            </p>
+          </div>
+
+          
+        </div>
+
+        {/*
+          Image is a SIBLING of the card, not a child.
+          `absolute` positions it relative to the outer `relative` div.
+          `-top-14` pulls it 3.5rem above the outer div's top edge (into the mt-14 space),
+          which is above the card's top border — giving the 3-D pop-out effect.
+        */}
+        <Image
+          src="/shop_hero.png"
+          alt=""
+          width={220}
+          height={220}
+          className="absolute -top-14 right-0 object-contain pointer-events-none drop-shadow-xl"
+          aria-hidden="true"
+        />
       </div>
 
       <ShopClient
