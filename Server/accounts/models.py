@@ -66,6 +66,8 @@ class User(AbstractUser):
     year = models.IntegerField(null=True, blank=True)
     branch = models.CharField(max_length=255, blank=True, default="")
     total_points = models.IntegerField(default=0)
+    # Supabase public URL uploaded directly by the client. Null by default.
+    profile_pic = models.TextField(null=True, blank=True, default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

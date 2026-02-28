@@ -20,6 +20,7 @@ class UserReadSerializer(serializers.ModelSerializer):
             "year",
             "branch",
             "total_points",
+            "profile_pic",
             "created_at",
             "updated_at",
         ]
@@ -30,6 +31,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     password = serializers.CharField(write_only=True, min_length=8)
     role = serializers.ChoiceField(choices=UserRole.choices, default=UserRole.STUDENT)
+    # Client uploads profile pic to Supabase first, then passes the URL here.
+    profile_pic = serializers.CharField(required=False, allow_null=True, default=None)
 
     class Meta:
         model = User
@@ -41,6 +44,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             "role",
             "year",
             "branch",
+            "profile_pic",
         ]
 
     def create(self, validated_data):

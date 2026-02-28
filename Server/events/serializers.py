@@ -31,6 +31,7 @@ class EventReadSerializer(serializers.ModelSerializer):
             "points_per_participant",
             "winner_points",
             "winners_roll_nos",
+            "banner_url",
             "created_by",
             "created_at",
         ]
@@ -38,6 +39,10 @@ class EventReadSerializer(serializers.ModelSerializer):
 
 class EventCreateSerializer(serializers.ModelSerializer):
     """Write serializer for event creation."""
+
+    # banner_url is optional — client uploads image to Supabase directly and
+    # passes back the public URL. Empty string is stored if not provided.
+    banner_url = serializers.CharField(required=False, allow_blank=True, default="")
 
     class Meta:
         model = Event
@@ -49,6 +54,7 @@ class EventCreateSerializer(serializers.ModelSerializer):
             "location",
             "points_per_participant",
             "winner_points",
+            "banner_url",
         ]
 
 

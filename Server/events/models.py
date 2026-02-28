@@ -31,6 +31,9 @@ class Event(models.Model):
     points_per_participant = models.IntegerField()
     winner_points = models.IntegerField()
     winners_roll_nos = ArrayField(models.CharField(max_length=20), default=list, blank=True)
+    # Supabase public URL uploaded directly by the client before creating the event.
+    # Null by default — client uploads image to Supabase and passes the URL.
+    banner_url = models.TextField(null=True, blank=True, default=None)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="events_created")
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -20,16 +20,9 @@ class AttendanceMarkView(APIView):
         serializer = AttendanceMarkWriteSerializer(data=request.data)
         if not serializer.is_valid():
             return api_response(False, "Validation failed.", serializer.errors, 400)
-        
-        # event_id is already validated by serializer to exist
-        event_id = serializer.validated_data["event_id"]
-        roll_numbers = serializer.validated_data["roll_numbers"]
-        
-        event = Event.objects.get(id=event_id)
-        
-        # Use service to handle transaction-safe marking
-        result = mark_attendance(event=event, roll_number_list=roll_numbers)
-        
+
+        event = Event.objects.get(id=serializer.validated_data["event_id"])
+        result = mark_attendance(event=event, roll_number_list=serializer.validated_data["roll_numbers"])
         return api_response(True, "Attendance processed successfully.", result, 200)
 
 
@@ -44,10 +37,9 @@ class MyAttendanceView(APIView):
             .select_related("event")
             .order_by("-marked_at")
         )
-        serializer = AttendanceReadSerializer(attendances, many=True)
         return api_response(
-            True, 
-            "Attendance history fetched.", 
-            serializer.data, 
-            200
+            True,
+            "Attendance history fetched.",
+            AttendanceReadSerializer(attendances, many=True).data,
+            200,
         )
