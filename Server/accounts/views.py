@@ -4,7 +4,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from accounts.serializers import LoginSerializer, RegisterSerializer, UserReadSerializer
+from accounts.serializers import LoginSerializer, ProfileUpdateSerializer, RegisterSerializer, UserReadSerializer
 from common.responses import api_response
 
 
@@ -42,9 +42,21 @@ class LoginView(APIView):
 
 
 class MeView(APIView):
-    """Return the authenticated user's profile details."""
+    """
+    GET  /auth/me/ — return the authenticated user's profile.
+    PATCH /auth/me/ — update mutable profile fields (name, year, branch, profile_pic).
+    """
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         return api_response(True, "User profile fetched.", UserReadSerializer(request.user).data, 200)
+
+    def patch(self, request):
+        """Partially update the authenticated user's own profile."""
+        serializer = ProfileUpdateSerializer(request.user, data=request.data, partial=True)
+        if not serializer.is_valid():
+            return api_response(False, "Validation failed.", serializer.errors, 400)
+        serializer.save()
+        # Return the full updated profile so the client can refresh its state.
+        return api_response(True, "Profile updated.", UserReadSerializer(request.user).data, 200)

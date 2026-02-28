@@ -110,6 +110,22 @@ export async function fetchCurrentUser(): Promise<User | null> {
   }
 }
 
+/**
+ * PATCH /auth/me/ — update mutable profile fields.
+ * Allowed fields: name, year (1–4), branch, profile_pic.
+ * Returns the full updated User on success, or throws on validation failure.
+ */
+export async function updateMyProfile(
+  payload: Partial<Pick<User, 'name' | 'year' | 'branch' | 'profile_pic'>>,
+): Promise<User> {
+  const res = await authorizedFetch(`${API_BASE}/auth/me/`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return await unwrap<User>(res);
+}
+
 // ── Events ────────────────────────────────────────────────────────────────────
 
 /** GET /events/{id}/ — public, returns a single event or null if not found. */
@@ -282,7 +298,10 @@ export async function fetchMyPoints(): Promise<PointsData> {
  */
 export async function fetchLeaderboard(): Promise<LeaderboardEntry[]> {
   try {
-    const res = await fetch(`${API_BASE}/points/leaderboard/`);
+    // cache: 'no-store' ensures every page load fetches fresh data from the
+    // backend so newly registered students appear immediately without needing
+    // a Next.js cache revalidation cycle.
+    const res = await fetch(`${API_BASE}/points/leaderboard/`, { cache: 'no-store' });
     if (res.ok) {
       const data = await tryUnwrap<LeaderboardEntry[]>(res);
       if (data) return data;

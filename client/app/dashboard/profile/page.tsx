@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { getInitials } from '@/lib/utils';
 import { serverUnwrap } from '@/lib/server-fetch';
 import type { PointsData, Submission, SubmissionStatus, User, UserRole } from '@/lib/types';
+import ProfileEditForm from '@/components/ProfileEditForm';
 
 const SOURCE_LABEL: Record<string, string> = {
   attendance:  'Attendance',
@@ -62,11 +63,19 @@ export default async function ProfilePage() {
 
           {/* Extra fields from /auth/me/ */}
           {user && (
-            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
-              <span className="font-mono">{user.roll_no}</span>
-              {user.branch && <span>{user.branch}</span>}
-              {user.year   && <span>Year {user.year}</span>}
-            </div>
+            <>
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
+                <span className="font-mono">{user.roll_no}</span>
+                {user.branch ? <span>{user.branch}</span> : null}
+                {user.year   ? <span>Year {user.year}</span> : (
+                  <span className="text-amber-600 text-xs font-medium">
+                    Year not set — edit profile to fix leaderboard visibility
+                  </span>
+                )}
+              </div>
+              {/* Inline edit form — only shown for the owner */}
+              <ProfileEditForm user={user} />
+            </>
           )}
 
           {/* Points */}

@@ -73,7 +73,10 @@ export function storeUserInfo(user: User): void {
   document.cookie = `user_id=${user.id}; path=/; max-age=${MAX_AGE_USER}; SameSite=Strict`;
   // URI-encode name to safely handle spaces and non-ASCII
   document.cookie = `user_name=${encodeURIComponent(user.name)}; path=/; max-age=${MAX_AGE_USER}; SameSite=Strict`;
-  if (user.year !== undefined) {
+  // Only write the cookie when year is a valid integer (not null or undefined).
+  // Number("null") === NaN which would make defaultYear fall back to 1 on the
+  // leaderboard page — writing a stale value is worse than writing nothing.
+  if (user.year != null) {
     document.cookie = `user_year=${user.year}; path=/; max-age=${MAX_AGE_USER}; SameSite=Strict`;
   }
 }

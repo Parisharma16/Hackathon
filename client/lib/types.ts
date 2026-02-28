@@ -150,7 +150,12 @@ export interface LeaderboardEntry {
   roll_no:      string;
   name:         string;
   branch:       string;
-  year:         number;
+  /**
+   * The student's academic year (1–4).
+   * Null when the user registered without providing a year value.
+   * These entries are excluded from all year tabs on the leaderboard.
+   */
+  year:         number | null;
   total_points: number;
 }
 

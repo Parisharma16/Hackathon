@@ -26,8 +26,10 @@ function getInitials(name: string) {
 export default function LeaderboardTable({ entries, defaultYear = 1 }: LeaderboardTableProps) {
   const [year, setYear] = useState(defaultYear);
 
+  // Use loose equality so that both `year === null` and `year === undefined`
+  // entries are excluded from every numbered tab without a runtime error.
   const ranked = [...entries]
-    .filter((e) => e.year === year)
+    .filter((e) => e.year != null && e.year === year)
     .sort((a, b) => b.total_points - a.total_points)
     .map((e, i) => ({ ...e, rank: i + 1 }));
 
@@ -57,9 +59,13 @@ export default function LeaderboardTable({ entries, defaultYear = 1 }: Leaderboa
         </div>
 
         {ranked.length === 0 ? (
-          <p className="py-12 text-center text-sm text-gray-500">
-            No data for Year {year}.
-          </p>
+          <div className="py-12 text-center">
+            <p className="text-sm text-gray-500">No students found for Year {year}.</p>
+            <p className="mt-2 text-xs text-gray-400">
+              If you are a Year {year} student and do not see your name, your year
+              may not be set on your account. Contact an administrator to update it.
+            </p>
+          </div>
         ) : (
           <>
             {/* Trophy */}
