@@ -48,16 +48,16 @@ export default function ShopClient({ items, initialPoints, initialRedemptions }:
   return (
     <>
       {/* Points balance banner */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-5 mb-8 text-white flex items-center justify-between">
+      <div className="bg-gradient-to-r from-yellow-600 to-orange-600 rounded-2xl p-5 mb-8 text-white flex items-center justify-between">
         <div>
           <p className="text-blue-100 text-sm font-medium">Your Balance</p>
           <p className="text-3xl font-bold mt-0.5">
             {userPoints.toLocaleString()}
-            <span className="text-lg font-normal text-blue-200 ml-1.5">points</span>
+            <span className="text-lg font-normal text-yellow-200 ml-1.5">points</span>
           </p>
         </div>
         <div className="text-right">
-          <p className="text-blue-200 text-xs">{redemptions.length} item{redemptions.length !== 1 ? 's' : ''} redeemed</p>
+          <p className="text-yellow-200 text-xs">{redemptions.length} item{redemptions.length !== 1 ? 's' : ''} redeemed</p>
         </div>
       </div>
 
@@ -69,13 +69,13 @@ export default function ShopClient({ items, initialPoints, initialRedemptions }:
             onClick={() => setActiveTab(tab)}
             className={`px-5 py-2 rounded-md text-sm font-semibold capitalize transition-colors ${
               activeTab === tab
-                ? 'bg-white text-blue-600 shadow-sm'
+                ? 'bg-white text-orange-600 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             {tab}
             {tab === 'redeemed' && redemptions.length > 0 && (
-              <span className="ml-1.5 bg-blue-100 text-blue-600 text-xs font-bold rounded-full px-1.5 py-0.5">
+              <span className="ml-1.5 bg-blue-100 text-orange-600 text-xs font-bold rounded-full px-1.5 py-0.5">
                 {redemptions.length}
               </span>
             )}
@@ -94,8 +94,8 @@ export default function ShopClient({ items, initialPoints, initialRedemptions }:
                 onClick={() => setActiveCategory(cat)}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
                   activeCategory === cat
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400 hover:text-blue-600'
+                    ? 'bg-orange-500 text-white border-orange-400'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-yellow-400 hover:text-yellow-600'
                 }`}
               >
                 {cat}

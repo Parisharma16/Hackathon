@@ -37,8 +37,8 @@ export default function ShopItemCard({ item, userPoints, onRedeemed }: ShopItemC
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden hover:shadow-md transition-shadow">
       {/* Category strip */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-gray-100">
-        <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">{item.category}</span>
+      <div className="bg-gradient-to-r from-yellow-50 to-orange-50 px-4 py-3 border-b border-gray-100">
+        <span className="text-xs font-semibold text-orange-600 uppercase tracking-wide">{item.category}</span>
       </div>
 
       <div className="p-5 flex flex-col flex-1">
@@ -47,7 +47,7 @@ export default function ShopItemCard({ item, userPoints, onRedeemed }: ShopItemC
 
         {/* Cost + stock row */}
         <div className="flex items-center justify-between mb-4">
-          <span className="text-xl font-bold text-blue-600">
+          <span className="text-xl font-bold text-orange-600">
             {item.points_cost.toLocaleString()}
             <span className="text-sm font-normal text-gray-500 ml-1">pts</span>
           </span>
@@ -84,8 +84,8 @@ export default function ShopItemCard({ item, userPoints, onRedeemed }: ShopItemC
             onClick={handleRedeem}
             disabled={!canAfford || !inStock || isRedeeming}
             title={!canAfford ? `You need ${item.points_cost - userPoints} more points` : undefined}
-            className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold
-              hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full bg-orange-300 text-white px-4 py-2 rounded-lg text-sm font-semibold
+              hover:bg-orange-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isRedeeming
               ? 'Redeeming...'
