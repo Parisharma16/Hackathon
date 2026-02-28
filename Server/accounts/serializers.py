@@ -53,6 +53,24 @@ class RegisterSerializer(serializers.ModelSerializer):
         return User.objects.create_user(password=password, **validated_data)
 
 
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    """
+    Write serializer for PATCH /auth/me/.
+    Only allows the user to update fields they own.
+    Role and total_points are deliberately excluded to prevent privilege escalation.
+    """
+
+    class Meta:
+        model = User
+        fields = ["name", "year", "branch", "profile_pic"]
+        extra_kwargs = {
+            "name":        {"required": False},
+            "year":        {"required": False, "allow_null": True, "min_value": 1, "max_value": 4},
+            "branch":      {"required": False, "allow_blank": True},
+            "profile_pic": {"required": False, "allow_null": True, "allow_blank": True},
+        }
+
+
 class LoginSerializer(serializers.Serializer):
     """Write serializer for credential-based login."""
 

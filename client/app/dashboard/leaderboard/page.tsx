@@ -9,8 +9,10 @@ import { fetchLeaderboard } from '@/lib/api';
 export default async function LeaderboardPage() {
   const cookieStore = await cookies();
 
-  // Default to the logged-in user's year so the relevant tab opens first
-  const rawYear     = Number(cookieStore.get('user_year')?.value);
+  // Default to the logged-in user's year so the relevant tab opens first.
+  // The cookie is only written by storeUserInfo when year is a valid integer,
+  // so parseInt is safer than Number() (Number("null") === NaN).
+  const rawYear     = parseInt(cookieStore.get('user_year')?.value ?? '', 10);
   const defaultYear = ([1, 2, 3, 4].includes(rawYear) ? rawYear : 1);
 
   const entries = await fetchLeaderboard();
