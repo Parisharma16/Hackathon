@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { fetchEvent } from '@/lib/api';
 import type { UserRole } from '@/lib/types';
+import WinnersPanel from '@/components/WinnersPanel';
 
 /** Format "HH:MM:SS" or "HH:MM" from the backend into "H:MM AM/PM". */
 function formatTime(time: string): string {
@@ -140,19 +141,45 @@ export default async function EventDetailPage({
             </div>
           </div>
 
-          {/* Winners list (if any) */}
-          {event.winners_roll_nos.length > 0 && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-              <p className="text-sm font-semibold text-amber-800 mb-2">Winners</p>
-              <div className="flex flex-wrap gap-2">
-                {event.winners_roll_nos.map((roll) => (
-                  <span key={roll} className="bg-amber-100 text-amber-800 text-xs font-mono px-2 py-1 rounded">
-                    {roll}
-                  </span>
-                ))}
+          {/* ── Winners ─────────────────────────────────────────────────── */}
+          {isOwner && isPast ? (
+            /* Organiser view: interactive panel to declare / update winners */
+            <div className="mb-6">
+              <WinnersPanel
+                eventId={event.id}
+                initialWinners={event.winners_roll_nos}
+              />
+            </div>
+          ) : event.winners_roll_nos.length > 0 ? (
+            /* Public / student view: read-only podium display */
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-6">
+              <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide mb-3">
+                Winners
+              </p>
+              <div className="flex flex-col gap-2">
+                {(['1st Place', '2nd Place', '3rd Place'] as const).map((posLabel, i) => {
+                  const roll = event.winners_roll_nos[i];
+                  if (!roll) return null;
+                  const badgeClasses = [
+                    'bg-yellow-100 text-yellow-800 border border-yellow-300',
+                    'bg-gray-100 text-gray-700 border border-gray-300',
+                    'bg-orange-100 text-orange-800 border border-orange-300',
+                  ];
+                  return (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${badgeClasses[i]}`}>
+                        {i + 1}
+                      </span>
+                      <div>
+                        <p className="text-xs text-amber-700 font-medium">{posLabel}</p>
+                        <p className="text-sm font-mono font-semibold text-amber-900">{roll}</p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          )}
+          ) : null}
 
           {/* Action buttons — organiser/admin only (no upload certificate here) */}
           {isOwner && (

@@ -48,12 +48,6 @@ const IconCreate = () => (
     <path d="M12 8v8M8 12h8" strokeWidth="2" strokeLinecap="round" />
   </svg>
 );
-const IconCamera = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" strokeWidth="2" strokeLinejoin="round" />
-    <circle cx="12" cy="13" r="4" strokeWidth="2" />
-  </svg>
-);
 const IconAdmin = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" strokeWidth="2" strokeLinejoin="round" />
@@ -74,8 +68,7 @@ function getNavLinks(role?: UserRole): NavLink[] {
   ];
 
   const organizerLinks: NavLink[] = [
-    { href: '/dashboard/events/create',     label: 'Create Event',       icon: <IconCreate /> },
-    { href: '/dashboard/organizer/capture', label: 'Capture Attendance', icon: <IconCamera /> },
+    { href: '/dashboard/events/create', label: 'Create Event', icon: <IconCreate /> },
   ];
 
   const adminLinks: NavLink[] = [
