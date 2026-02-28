@@ -1,16 +1,21 @@
 'use client';
 
 /**
- * POST /submissions/
+ * Submission upload form.
+ *
+ * POST /submissions/upload/
  * multipart/form-data fields:
- *   event           – event UUID (required)
- *   submission_type – "certificate" | "cgpa" | "paper" (required)
- *   file_url        – file (required, pdf/jpg/jpeg/png, max 5 MB)
+ *   submission_type  – "certificate" | "cgpa" | "paper"  (required)
+ *   file             – the document                       (required, pdf/jpg/jpeg/png, max 5 MB)
+ *
+ * NOTE: As per the API spec, submissions are NOT tied to a specific event.
+ * The backend assigns points manually after an admin reviews the document.
  */
 
-import { useRef, useState, useEffect } from 'react';
-import { fetchEvents, createSubmission } from '@/lib/api';
-import type { Event, SubmissionType } from '@/lib/types';
+import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createSubmission } from '@/lib/api';
+import type { SubmissionType } from '@/lib/types';
 
 const SUBMISSION_TYPES: { value: SubmissionType; label: string }[] = [
   { value: 'certificate', label: 'Participation Certificate' },
@@ -18,27 +23,22 @@ const SUBMISSION_TYPES: { value: SubmissionType; label: string }[] = [
   { value: 'paper',       label: 'Research Paper'           },
 ];
 
-const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB per API spec
+// Must match the backend MAX_UPLOAD_BYTES limit (5 MB).
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
 interface DocumentUploadFormProps {
-  /** Pre-select an event (e.g. when linked from an event detail page). */
-  preselectedEventId?: string;
+  /** Optional callback invoked after a successful upload. */
+  onSuccess?: () => void;
 }
 
-export default function DocumentUploadForm({ preselectedEventId }: DocumentUploadFormProps) {
-  const [events, setEvents]             = useState<Event[]>([]);
-  const [eventId, setEventId]           = useState(preselectedEventId ?? '');
+export default function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
+  const router = useRouter();
   const [subType, setSubType]           = useState<SubmissionType>('certificate');
   const [file, setFile]                 = useState<File | null>(null);
   const [isUploading, setIsUploading]   = useState(false);
   const [status, setStatus]             = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg]         = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Load events for the selector
-  useEffect(() => {
-    fetchEvents().then(setEvents).catch(console.error);
-  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0] ?? null;
@@ -54,19 +54,21 @@ export default function DocumentUploadForm({ preselectedEventId }: DocumentUploa
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !eventId) return;
+    if (!file) return;
 
     setIsUploading(true);
     setStatus('idle');
     setErrorMsg('');
 
     try {
-      await createSubmission(eventId, subType, file);
+      await createSubmission(subType, file);
       setStatus('success');
       setFile(null);
-      setEventId(preselectedEventId ?? '');
       setSubType('certificate');
       if (fileInputRef.current) fileInputRef.current.value = '';
+      onSuccess?.();
+      // Brief pause so the user sees the success message before navigating away.
+      setTimeout(() => router.push('/dashboard/profile'), 1200);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Upload failed. Please try again.');
       setStatus('error');
@@ -80,28 +82,6 @@ export default function DocumentUploadForm({ preselectedEventId }: DocumentUploa
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Event selector */}
-      <div>
-        <label htmlFor="event" className="block text-sm font-medium text-gray-700 mb-1">
-          Event <span className="text-red-500">*</span>
-        </label>
-        <select
-          id="event"
-          required
-          value={eventId}
-          onChange={(e) => setEventId(e.target.value)}
-          className={selectClass}
-          disabled={Boolean(preselectedEventId)}
-        >
-          <option value="">— Select an event —</option>
-          {events.map((ev) => (
-            <option key={ev.id} value={ev.id}>
-              {ev.title} ({ev.date})
-            </option>
-          ))}
-        </select>
-      </div>
-
       {/* Submission type */}
       <div>
         <label htmlFor="subType" className="block text-sm font-medium text-gray-700 mb-1">
@@ -121,12 +101,13 @@ export default function DocumentUploadForm({ preselectedEventId }: DocumentUploa
 
       {/* File picker */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="docFile" className="block text-sm font-medium text-gray-700 mb-1">
           File <span className="text-red-500">*</span>{' '}
           <span className="text-gray-400 font-normal">(PDF, JPG, PNG — max 5 MB)</span>
         </label>
         <input
           ref={fileInputRef}
+          id="docFile"
           type="file"
           accept=".pdf,.jpg,.jpeg,.png"
           required
@@ -149,10 +130,10 @@ export default function DocumentUploadForm({ preselectedEventId }: DocumentUploa
 
       <button
         type="submit"
-        disabled={!file || !eventId || isUploading}
+        disabled={!file || isUploading}
         className="w-full bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        {isUploading ? 'Uploading…' : 'Submit for Review'}
+        {isUploading ? 'Uploading...' : 'Submit for Review'}
       </button>
     </form>
   );

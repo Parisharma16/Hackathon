@@ -31,7 +31,7 @@ export default function StudentUploadPage() {
         <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
           <h3 className="text-sm font-semibold text-blue-900 mb-2">Submission Guidelines</h3>
           <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Accepted formats: PDF, JPG, PNG (max 10 MB)</li>
+            <li>• Accepted formats: PDF, JPG, PNG (max 5 MB)</li>
             <li>• Document must clearly show your name and event details</li>
             <li>• Allow 3–5 business days for review and point allocation</li>
           </ul>

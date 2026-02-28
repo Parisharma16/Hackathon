@@ -107,8 +107,12 @@ export interface MarkAttendanceResponse {
 
 export interface Submission {
   id:              string;
-  event:           string;
-  event_title:     string;
+  /**
+   * Present in the admin pending-submissions response.
+   * Not included in GET /submissions/my/ (the student-facing endpoint).
+   */
+  event?:          string;
+  event_title?:    string;
   submission_type: SubmissionType;
   file_url:        string;
   status:          SubmissionStatus;

@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { getInitials } from '@/lib/utils';
 import { serverUnwrap } from '@/lib/server-fetch';
-import type { PointsData, User, UserRole } from '@/lib/types';
+import type { PointsData, Submission, SubmissionStatus, User, UserRole } from '@/lib/types';
 
 const SOURCE_LABEL: Record<string, string> = {
   attendance:  'Attendance',
@@ -20,6 +20,19 @@ const ENTRY_TYPE_STYLE: Record<string, string> = {
   debit:  'text-red-500',
 };
 
+const SUBMISSION_TYPE_LABEL: Record<string, string> = {
+  certificate: 'Certificate',
+  cgpa:        'CGPA Document',
+  paper:       'Research Paper',
+};
+
+/** Tailwind classes for each submission status badge. */
+const STATUS_BADGE: Record<SubmissionStatus, string> = {
+  pending:  'bg-amber-50  text-amber-700  border-amber-200',
+  approved: 'bg-green-50  text-green-700  border-green-200',
+  rejected: 'bg-red-50    text-red-600    border-red-200',
+};
+
 export default async function ProfilePage() {
   const cookieStore = await cookies();
   const userName = decodeURIComponent(cookieStore.get('user_name')?.value ?? 'Student User');
@@ -27,9 +40,10 @@ export default async function ProfilePage() {
 
   // Fetch live data using server-side auth (reads access_token cookie).
   // Falls back to safe defaults so the page always renders.
-  const [pointsData, user] = await Promise.all([
+  const [pointsData, user, submissions] = await Promise.all([
     serverUnwrap<PointsData>('/points/my/').then((d) => d ?? { total_points: 0, ledger: [] }),
     serverUnwrap<User>('/auth/me/'),
+    serverUnwrap<Submission[]>('/submissions/my/').then((d) => d ?? []),
   ]);
 
   return (
@@ -79,6 +93,63 @@ export default async function ProfilePage() {
             View Leaderboard
           </Link>
         </div>
+      </div>
+
+      {/* Submitted documents */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-lg font-bold text-gray-900">My Documents</h2>
+          <Link
+            href="/dashboard/student/upload"
+            className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+          >
+            + Upload New
+          </Link>
+        </div>
+
+        {submissions.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500 text-sm">No documents uploaded yet.</p>
+            <Link
+              href="/dashboard/student/upload"
+              className="inline-block mt-3 text-sm font-semibold text-blue-600 hover:underline"
+            >
+              Upload your first certificate
+            </Link>
+          </div>
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {submissions.map((sub) => (
+              <li key={sub.id} className="py-4 flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-900 text-sm">
+                    {SUBMISSION_TYPE_LABEL[sub.submission_type] ?? sub.submission_type}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {new Date(sub.uploaded_at).toLocaleDateString('en-IN', {
+                      day: 'numeric', month: 'short', year: 'numeric',
+                    })}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  {/* Status badge */}
+                  <span className={`text-xs font-semibold capitalize px-2.5 py-1 rounded-full border ${STATUS_BADGE[sub.status]}`}>
+                    {sub.status}
+                  </span>
+                  {/* Link to the uploaded file */}
+                  <a
+                    href={sub.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-gray-400 hover:text-blue-600 transition-colors underline underline-offset-2"
+                  >
+                    View
+                  </a>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* Ledger / activity history */}
