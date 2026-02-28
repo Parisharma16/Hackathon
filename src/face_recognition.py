@@ -59,7 +59,9 @@ class FaceAttendanceSystem:
         best_face = max(faces, key=lambda f: f.det_score)
         print(f"[INFO] Detected {len(faces)} face(s) — using best confidence: {best_face.det_score:.3f}")
 
-        self.collection.add(
+        # upsert instead of add so re-registering the same roll number
+        # updates the embedding rather than throwing a duplicate ID error.
+        self.collection.upsert(
             embeddings=[self._get_embedding(best_face)],
             ids=[roll_number],
             metadatas=[{"name": name, "roll": roll_number}]

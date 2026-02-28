@@ -149,6 +149,10 @@ async def detect_and_mark(
     The caller only needs to supply the group photo, event_id, and a valid Django
     organizer/admin JWT token. All other steps are handled internally.
     """
+    # Strip whitespace from token — Postman form-data can introduce invisible
+    # newlines or spaces that cause Django to reject the token with 401.
+    django_token = django_token.strip()
+
     # Step 1 + 2: Run face recognition.
     tmp_path = _save_upload_to_tempfile(file)
     try:
