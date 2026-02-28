@@ -17,6 +17,7 @@ urlpatterns = [
     path("submissions/", include("submissions.urls")),
     path("admin/submissions/", include("reviews.urls")),
     path("points/", include("points.urls")),
+    path("shop/", include("shop.urls")),
 ]
 
 if settings.DEBUG:

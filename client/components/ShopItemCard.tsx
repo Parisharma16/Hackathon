@@ -2,31 +2,33 @@
 
 import { useState } from 'react';
 import { redeemItem } from '@/lib/api';
-import type { ShopItem } from '@/lib/types';
+import type { RedeemResult, ShopItem } from '@/lib/types';
 
 interface ShopItemCardProps {
   item: ShopItem;
   userPoints: number;
-  onRedeemed: (remainingPoints: number) => void;
+  /** Called after a successful redemption with the user's updated point balance. */
+  onRedeemed: (remainingPoints: number, result: RedeemResult) => void;
 }
 
 export default function ShopItemCard({ item, userPoints, onRedeemed }: ShopItemCardProps) {
   const [isRedeeming, setIsRedeeming] = useState(false);
-  const [redeemed, setRedeemed] = useState(false);
+  const [result, setResult] = useState<RedeemResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   const canAfford = userPoints >= item.points_cost;
   const inStock = item.stock > 0;
 
   const handleRedeem = async () => {
-    if (!canAfford || !inStock) return;
+    if (!canAfford || !inStock || isRedeeming) return;
     setIsRedeeming(true);
+    setError(null);
     try {
-      const { remainingPoints } = await redeemItem(item.id);
-      setRedeemed(true);
-      onRedeemed(remainingPoints);
-    } catch {
-      // Shop endpoint not yet implemented on backend — optimistic UI
-      setRedeemed(true);
-      onRedeemed(Math.max(0, userPoints - item.points_cost));
+      const redeemResult = await redeemItem(item.id);
+      setResult(redeemResult);
+      onRedeemed(redeemResult.remaining_points, redeemResult);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Redemption failed. Please try again.');
     } finally {
       setIsRedeeming(false);
     }
@@ -56,9 +58,26 @@ export default function ShopItemCard({ item, userPoints, onRedeemed }: ShopItemC
           </span>
         </div>
 
-        {redeemed ? (
-          <div className="w-full text-center bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded-lg text-sm font-semibold">
-            Redeemed!
+        {/* Error banner */}
+        {error && (
+          <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">
+            {error}
+          </p>
+        )}
+
+        {result ? (
+          /* Post-redemption state: show success + unique code */
+          <div className="space-y-2">
+            <div className="w-full text-center bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded-lg text-sm font-semibold">
+              Redeemed successfully!
+            </div>
+            <div className="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-3 text-center">
+              <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide font-medium">Your redemption code</p>
+              <p className="text-lg font-mono font-bold text-gray-800 tracking-widest select-all">
+                {result.code}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">Present this code to collect your reward</p>
+            </div>
           </div>
         ) : (
           <button
@@ -68,7 +87,11 @@ export default function ShopItemCard({ item, userPoints, onRedeemed }: ShopItemC
             className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold
               hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isRedeeming ? 'Redeeming…' : canAfford ? 'Redeem' : `Need ${item.points_cost - userPoints} more pts`}
+            {isRedeeming
+              ? 'Redeeming...'
+              : canAfford
+              ? 'Redeem'
+              : `Need ${(item.points_cost - userPoints).toLocaleString()} more pts`}
           </button>
         )}
       </div>

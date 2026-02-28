@@ -33,6 +33,8 @@ class LedgerSource(models.TextChoices):
     CERTIFICATE = "certificate", "Certificate"
     CGPA = "cgpa", "CGPA"
     PAPER = "paper", "Paper"
+    # Debit entry created when a user redeems a shop item.
+    REDEMPTION = "redemption", "Shop Redemption"
 
 
 class Participation(models.Model):

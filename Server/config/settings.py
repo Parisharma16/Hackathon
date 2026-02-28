@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "submissions",
     "reviews",
     "points",
+    "shop",
 ]
 
 MIDDLEWARE = [

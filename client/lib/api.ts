@@ -19,6 +19,9 @@ import type {
   LeaderboardEntry,
   ApiEnvelope,
   User,
+  ShopItem,
+  Redemption,
+  RedeemResult,
 } from '@/lib/types';
 import {
   MOCK_EVENTS,
@@ -26,7 +29,6 @@ import {
   MOCK_SHOP_ITEMS,
   MOCK_POINTS,
 } from '@/lib/mock-data';
-import type { ShopItem } from '@/lib/types';
 
 export const API_BASE =
   process.env.NEXT_PUBLIC_DRF_API_URL ?? 'http://127.0.0.1:8000';
@@ -289,17 +291,49 @@ export async function fetchLeaderboard(): Promise<LeaderboardEntry[]> {
   return MOCK_LEADERBOARD;
 }
 
-// ── Shop (frontend-only; no backend endpoint) ─────────────────────────────────
+// ── Shop ──────────────────────────────────────────────────────────────────────
 
+/**
+ * GET /shop/items/
+ * Public endpoint — no auth required.
+ * Falls back to mock data when the server is unreachable so local development
+ * without a running backend still renders the shop page.
+ */
 export async function fetchShopItems(): Promise<ShopItem[]> {
+  try {
+    const res = await fetch(`${API_BASE}/shop/items/`);
+    if (res.ok) {
+      const data = await tryUnwrap<ShopItem[]>(res);
+      if (data) return data;
+    }
+  } catch { /* fall through to mock */ }
   return MOCK_SHOP_ITEMS;
 }
 
-export async function redeemItem(
-  /* itemId — will be used when the backend shop endpoint is implemented */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _itemId: string,
-): Promise<{ remainingPoints: number }> {
-  // Placeholder until a shop endpoint exists on the backend
-  throw new Error('Shop redemption endpoint not yet implemented on the server.');
+/**
+ * POST /shop/items/<id>/redeem/
+ * Deducts points from the user's balance, decrements item stock, and returns
+ * the unique redemption code along with the updated point balance.
+ */
+export async function redeemItem(itemId: string): Promise<RedeemResult> {
+  const res = await authorizedFetch(`${API_BASE}/shop/items/${itemId}/redeem/`, {
+    method: 'POST',
+  });
+  return unwrap<RedeemResult>(res);
+}
+
+/**
+ * GET /shop/redemptions/my/
+ * Returns all past redemptions for the currently authenticated user.
+ * Returns an empty array when the server is unreachable.
+ */
+export async function fetchMyRedemptions(): Promise<Redemption[]> {
+  try {
+    const res = await authorizedFetch(`${API_BASE}/shop/redemptions/my/`);
+    if (res.ok) {
+      const data = await tryUnwrap<Redemption[]>(res);
+      if (data) return data;
+    }
+  } catch { /* fall through */ }
+  return [];
 }

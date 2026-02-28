@@ -1,13 +1,23 @@
-// app/dashboard/shop/page.tsx
-// Shop items come from mock data (no backend endpoint yet).
-// User points come from GET /points/my/
+/**
+ * Shop page — server component.
+ *
+ * Fetches all three data sources in parallel:
+ *   1. Shop catalogue  — GET /shop/items/           (public)
+ *   2. User points     — GET /points/my/            (authenticated)
+ *   3. Past redemptions — GET /shop/redemptions/my/ (authenticated)
+ *
+ * All three calls fall back gracefully when the backend is unreachable so the
+ * page still renders in local development without a running server.
+ */
+
 import ShopClient from './ShopClient';
-import { fetchShopItems, fetchMyPoints } from '@/lib/api';
+import { fetchShopItems, fetchMyPoints, fetchMyRedemptions } from '@/lib/api';
 
 export default async function ShopPage() {
-  const [items, pointsData] = await Promise.all([
+  const [items, pointsData, redemptions] = await Promise.all([
     fetchShopItems(),
     fetchMyPoints(),
+    fetchMyRedemptions(),
   ]);
 
   return (
@@ -17,7 +27,11 @@ export default async function ShopPage() {
         <p className="text-gray-500 mt-1">Redeem your hard-earned points for exclusive rewards</p>
       </div>
 
-      <ShopClient items={items} initialPoints={pointsData.total_points} />
+      <ShopClient
+        items={items}
+        initialPoints={pointsData.total_points}
+        initialRedemptions={redemptions}
+      />
     </div>
   );
 }
