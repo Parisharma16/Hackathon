@@ -74,7 +74,10 @@ export async function rejectSubmission(
   const json = await res.json().catch(() => ({ success: false, message: 'Server error.' }));
 
   if (json.success) {
-    revalidatePath('/dashboard/admin');
+    // Bust the cached admin list so the page re-fetches on next render
+    revalidateTag('admin-pending-submissions', 'default');
+    // Also bust the student ledger cache in case points were awarded
+    revalidateTag('student-points', 'default');
   }
 
   return { success: json.success, message: json.message };

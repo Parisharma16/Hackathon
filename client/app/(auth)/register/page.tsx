@@ -70,7 +70,7 @@ export default function RegisterPage() {
         // envelope.data may contain field-level errors (DRF validation)
         const detail =
           typeof envelope.data === 'object' && envelope.data !== null
-            ? Object.values(envelope.data as Record<string, string[]>)
+            ? Object.values(envelope.data as unknown as Record<string, string[]>)
                 .flat()
                 .join(' ')
             : envelope.message;

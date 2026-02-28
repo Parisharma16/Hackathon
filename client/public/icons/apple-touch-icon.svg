@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180" fill="none">
+  <!-- White background for Apple -->
+  <rect width="180" height="180" rx="36" fill="#ffffff"/>
+
+  <!-- Inner card -->
+  <rect x="10" y="10" width="160" height="160" rx="28" fill="#1a1a2e"/>
+
+  <!-- Graduation cap brim -->
+  <polygon points="90,46 150,72 90,98 30,72" fill="#e2b96f"/>
+
+  <!-- Cap top knob -->
+  <rect x="82" y="38" width="16" height="12" rx="4" fill="#e2b96f"/>
+
+  <!-- Tassel string -->
+  <line x1="150" y1="72" x2="150" y2="100" stroke="#e2b96f" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="150" cy="106" r="6" fill="#e2b96f"/>
+
+  <!-- Body under cap -->
+  <path d="M68,98 L68,122 Q90,136 112,122 L112,98 Q90,110 68,98Z" fill="#c9a050"/>
+</svg>
