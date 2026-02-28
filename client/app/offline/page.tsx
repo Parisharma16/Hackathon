@@ -1,6 +1,11 @@
+import RetryButton from "./RetryButton";
+
 /**
- * Offline fallback page — served by the service worker when
- * the user navigates to a page that isn't cached and the network is unavailable.
+ * Offline fallback page — served by the service worker when the user
+ * navigates to a page that isn't cached and the network is unavailable.
+ *
+ * Kept as a Server Component so `metadata` can be exported.
+ * The interactive "Try again" button lives in RetryButton.tsx ('use client').
  */
 export const metadata = {
   title: "You're offline",
@@ -22,12 +27,7 @@ export default function OfflinePage() {
         </p>
       </div>
 
-      <button
-        onClick={() => window.location.reload()}
-        className="rounded-lg bg-[#e2b96f] px-6 py-3 font-semibold text-[#1a1a2e] transition hover:bg-[#c9a050] active:scale-95"
-      >
-        Try again
-      </button>
+      <RetryButton />
     </main>
   );
 }
