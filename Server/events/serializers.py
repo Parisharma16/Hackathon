@@ -61,16 +61,23 @@ class EventCreateSerializer(serializers.ModelSerializer):
 
 
 class EventWinnersUpdateSerializer(serializers.Serializer):
-    """Write serializer for winner roll number updates."""
+    """Write serializer for winner roll number updates.
+
+    Accepts an ordered list of up to 3 roll numbers where index 0 = 1st place,
+    index 1 = 2nd place, and index 2 = 3rd place.  Empty strings are stripped
+    before the 3-entry cap is enforced.
+    """
 
     winners_roll_nos = serializers.ListField(
-        child=serializers.CharField(max_length=20),
+        child=serializers.CharField(max_length=20, allow_blank=True),
         allow_empty=True,
+        max_length=3,
     )
 
     def validate_winners_roll_nos(self, value):
         """
-        Normalize and deduplicate winner roll numbers while preserving order.
+        Strip blanks, deduplicate while preserving positional order, and cap at
+        3 entries (positions 1st–3rd).
         """
         normalized: list[str] = []
         seen: set[str] = set()
@@ -81,4 +88,9 @@ class EventWinnersUpdateSerializer(serializers.Serializer):
             if roll_norm not in seen:
                 seen.add(roll_norm)
                 normalized.append(roll_norm)
+
+        if len(normalized) > 3:
+            raise serializers.ValidationError(
+                "Only 1st, 2nd, and 3rd place winners are allowed (maximum 3 entries)."
+            )
         return normalized
