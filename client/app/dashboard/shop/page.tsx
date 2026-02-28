@@ -11,13 +11,18 @@
  */
 
 import ShopClient from './ShopClient';
-import { fetchShopItems, fetchMyPoints, fetchMyRedemptions } from '@/lib/api';
+import { fetchShopItems } from '@/lib/api';
+import { serverUnwrap } from '@/lib/server-fetch';
+import type { PointsData, Redemption } from '@/lib/types';
 
 export default async function ShopPage() {
   const [items, pointsData, redemptions] = await Promise.all([
+    // Public endpoint — no auth needed, existing helper is fine.
     fetchShopItems(),
-    fetchMyPoints(),
-    fetchMyRedemptions(),
+    // Authenticated endpoints — must use serverUnwrap so the access_token
+    // cookie is forwarded from the browser to the Django backend.
+    serverUnwrap<PointsData>('/points/my/').then((d) => d ?? { total_points: 0, ledger: [] }),
+    serverUnwrap<Redemption[]>('/shop/redemptions/my/').then((d) => d ?? []),
   ]);
 
   return (

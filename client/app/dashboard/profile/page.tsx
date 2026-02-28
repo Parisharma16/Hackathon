@@ -3,9 +3,9 @@
 // GET /auth/me/     → User (for roll_no, branch, year etc.)
 import { cookies } from 'next/headers';
 import Link from 'next/link';
-import { fetchMyPoints, fetchCurrentUser } from '@/lib/api';
 import { getInitials } from '@/lib/utils';
-import type { UserRole } from '@/lib/types';
+import { serverUnwrap } from '@/lib/server-fetch';
+import type { PointsData, User, UserRole } from '@/lib/types';
 
 const SOURCE_LABEL: Record<string, string> = {
   attendance:  'Attendance',
@@ -25,10 +25,11 @@ export default async function ProfilePage() {
   const userName = decodeURIComponent(cookieStore.get('user_name')?.value ?? 'Student User');
   const userRole = cookieStore.get('user_role')?.value as UserRole | undefined;
 
-  // Fetch live data; falls back to mock on error
+  // Fetch live data using server-side auth (reads access_token cookie).
+  // Falls back to safe defaults so the page always renders.
   const [pointsData, user] = await Promise.all([
-    fetchMyPoints(),
-    fetchCurrentUser(),
+    serverUnwrap<PointsData>('/points/my/').then((d) => d ?? { total_points: 0, ledger: [] }),
+    serverUnwrap<User>('/auth/me/'),
   ]);
 
   return (
