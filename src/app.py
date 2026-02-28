@@ -154,6 +154,7 @@ async def detect_and_mark(
     django_token = django_token.strip()
 
     # Step 1 + 2: Run face recognition.
+    django_token = django_token.strip()
     tmp_path = _save_upload_to_tempfile(file)
     try:
         results = get_orchestrator().mark(tmp_path, threshold=threshold)
