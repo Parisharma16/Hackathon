@@ -10,6 +10,8 @@ venv/
 env/
 .env/
 
+chroma_data/
+
 # Environment variables - never commit real secrets
 .env
 
