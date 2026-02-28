@@ -39,9 +39,9 @@ export async function processSubmission(
 
   if (json.success) {
     // Bust the cached admin list so the page re-fetches on next render
-    revalidateTag('admin-pending-submissions');
+    revalidateTag('admin-pending-submissions', 'default');
     // Also bust the student ledger cache in case points were awarded
-    revalidateTag('student-points');
+    revalidateTag('student-points', 'default');
   }
 
   return { success: json.success, message: json.message };
