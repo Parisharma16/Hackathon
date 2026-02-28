@@ -18,7 +18,7 @@ export default async function DashboardLayout({
 
   return (
     <DashboardProvider>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-100">
         <Navigation userRole={userRole} userName={userName} />
         {children}
       </div>

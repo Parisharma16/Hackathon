@@ -138,7 +138,7 @@ export default function DocumentUploadForm({ preselectedEventId }: DocumentUploa
       {/* Status messages */}
       {status === 'success' && (
         <p className="text-sm text-green-600 font-medium bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-          ✅ Submitted successfully! An admin will review it and award points.
+          Submitted successfully! An admin will review it and award points.
         </p>
       )}
       {(status === 'error' || errorMsg) && (

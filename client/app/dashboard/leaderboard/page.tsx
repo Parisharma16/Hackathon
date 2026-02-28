@@ -18,9 +18,6 @@ export default async function LeaderboardPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Leaderboard</h1>
-        <p className="text-gray-500 mt-1">
-          Rankings by total points. Switch years using the tabs below.
-        </p>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">

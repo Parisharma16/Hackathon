@@ -47,7 +47,6 @@ export default async function AdminDashboard() {
 
       {submissions.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-5xl mb-4">📋</p>
           <h3 className="text-lg font-semibold text-gray-900 mb-1">No pending submissions</h3>
           <p className="text-gray-500">All submissions have been reviewed.</p>
         </div>

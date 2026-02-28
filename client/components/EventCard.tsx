@@ -1,106 +1,110 @@
 'use client';
 
-// Pure presentational component. Marked 'use client' because it calls new Date()
-// during render (for isPast), which must run on the client to avoid hydration mismatches.
+import Image from 'next/image';
 import Link from 'next/link';
 import type { Event, UserRole } from '@/lib/types';
 
-/**
- * Maps the API's event type to a display colour scheme.
- * API values: "academic" | "cocurricular" | "extracurricular"
- */
-const TYPE_STYLE: Record<string, { bar: string; badge: string; text: string }> = {
-  academic:       { bar: 'bg-blue-500',   badge: 'bg-blue-50',   text: 'text-blue-700'   },
-  cocurricular:   { bar: 'bg-purple-500', badge: 'bg-purple-50', text: 'text-purple-700' },
-  extracurricular:{ bar: 'bg-green-500',  badge: 'bg-green-50',  text: 'text-green-700'  },
-};
-
-const TYPE_LABEL: Record<string, string> = {
-  academic:       'Academic',
-  cocurricular:   'Co-Curricular',
-  extracurricular:'Extra-Curricular',
+const TYPE_CONFIG: Record<string, {
+  badgeColor: string; // solid bg for the category pill
+  btnBg:      string; // light-tint button background
+  btnText:    string; // button text colour
+  image:      string; // stock image URL
+  label:      string;
+}> = {
+  academic: {
+    badgeColor: '#3b82f6',
+    btnBg:      '#dbeafe',
+    btnText:    '#1d4ed8',
+    image:      'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600&q=80',
+    label:      'Academic',
+  },
+  cocurricular: {
+    badgeColor: '#f97316',
+    btnBg:      '#ffedd5',
+    btnText:    '#c2410c',
+    image:      'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=600&q=80',
+    label:      'Co-Curricular',
+  },
+  extracurricular: {
+    badgeColor: '#10b981',
+    btnBg:      '#d1fae5',
+    btnText:    '#065f46',
+    image:      'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80',
+    label:      'Extra-Curricular',
+  },
 };
 
 interface EventCardProps {
-  event:    Event;
+  event:     Event;
   userRole?: UserRole;
-  /** Current user's ID — used to detect event ownership for Edit button */
-  userId?:  string;
+  userId?:   string;
 }
 
 export default function EventCard({ event, userRole, userId }: EventCardProps) {
-  const style   = TYPE_STYLE[event.type] ?? TYPE_STYLE.academic;
+  const config  = TYPE_CONFIG[event.type] ?? TYPE_CONFIG.academic;
   const isOwner = userRole === 'organizer' && event.created_by.id === userId;
+
   const eventDate = new Date(event.date);
-  const isPast    = eventDate < new Date();
+  const datePart  = eventDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  const timePart  = eventDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase();
 
   return (
-    <article className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow flex flex-col">
-      {/* Type colour bar */}
-      <div className={`${style.bar} h-1.5`} />
+    <article className="rounded-3xl overflow-hidden shadow-lg bg-[#1c1c2e] flex flex-col">
+      {/* ── Image section ── */}
+      <div className="relative h-44">
+        <Image
+          src={config.image}
+          alt={event.title}
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, 33vw"
+        />
 
-      <div className="p-5 flex flex-col flex-1">
-        {/* Type badge + points */}
-        <div className="flex items-start justify-between mb-3">
-          <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${style.badge} ${style.text}`}>
-            {TYPE_LABEL[event.type] ?? event.type}
-          </span>
-          <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full whitespace-nowrap">
-            +{event.points_per_participant} pts
-          </span>
+        {/* Category badge — top-left */}
+        <span
+          className="absolute top-3 left-3 text-xs font-extrabold px-3 py-1 rounded-full text-white tracking-wide shadow"
+          style={{ backgroundColor: config.badgeColor }}
+        >
+          {config.label.toUpperCase()}
+        </span>
+
+        {/* Points badge — bottom-right */}
+        <span className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-bold text-gray-800 shadow">
+          
+          {event.points_per_participant} XP
+        </span>
+      </div>
+
+      {/* ── Content section ── */}
+      <div className="bg-white p-4 flex flex-col gap-2 flex-1">
+        <h3 className="font-bold text-gray-900 text-base leading-snug">{event.title}</h3>
+
+        {/* Date & time */}
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <svg className="w-4 h-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="2" />
+            <path d="M16 2v4M8 2v4M3 10h18" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <span>{datePart} • {timePart}</span>
         </div>
 
-        {/* Title */}
-        <h3 className="text-base font-bold text-gray-900 mb-1 leading-snug">{event.title}</h3>
-
-        {/* Meta details */}
-        <ul className="space-y-1.5 text-sm text-gray-600 mb-5 flex-1">
-          <li className="flex items-center gap-2">
-            <span>🏛️</span>
-            <span className="truncate">{event.organized_by}</span>
-          </li>
-          <li className="flex items-center gap-2">
-            <span>📅</span>
-            <span>
-              {eventDate.toLocaleDateString('en-IN', {
-                weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
-              })}
-            </span>
-          </li>
-          <li className="flex items-center gap-2">
-            <span>📍</span>
-            <span className="truncate">{event.location}</span>
-          </li>
-          {event.winner_points > 0 && (
-            <li className="flex items-center gap-2">
-              <span>🏆</span>
-              <span>Winner: +{event.winner_points} pts</span>
-            </li>
-          )}
-        </ul>
-
-        {/* Past event badge */}
-        {isPast && (
-          <p className="text-xs text-gray-400 mb-3">Event concluded</p>
-        )}
-
-        {/* Actions */}
-        <div className="flex gap-2 mt-auto">
-          <Link
-            href={`/dashboard/events/${event.id}`}
-            className="flex-1 text-center bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-          >
-            View Details
-          </Link>
-          {isOwner && (
-            <Link
-              href={`/dashboard/events/${event.id}/edit`}
-              className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
-            >
-              Edit
-            </Link>
-          )}
+        {/* Location */}
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <svg className="w-4 h-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" strokeWidth="2" />
+            <circle cx="12" cy="9" r="2.5" strokeWidth="2" />
+          </svg>
+          <span className="truncate">{event.location}</span>
         </div>
+
+        {/* View Details button */}
+        <Link
+          href={`/dashboard/events/${event.id}`}
+          className="mt-2 block w-full text-center py-2.5 rounded-full text-sm font-bold transition-opacity hover:opacity-80"
+          style={{ backgroundColor: config.btnBg, color: config.btnText }}
+        >
+          {isOwner ? 'Manage Event' : 'View Details'}
+        </Link>
       </div>
     </article>
   );

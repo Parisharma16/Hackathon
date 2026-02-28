@@ -68,14 +68,14 @@ export default async function EventDetailPage({
           {/* Info grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             {[
-              { icon: '📅', label: 'Date',          value: eventDate.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) },
-              { icon: '📍', label: 'Location',      value: event.location },
-              { icon: '🏛️', label: 'Organised By',  value: event.organized_by },
-              { icon: '🎓', label: 'Created By',    value: `${event.created_by.name} (${event.created_by.roll_no})` },
-            ].map(({ icon, label, value }) => (
+              { label: 'Date',          value: eventDate.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) },
+              { label: 'Location',      value: event.location },
+              { label: 'Organised By',  value: event.organized_by },
+              { label: 'Created By',    value: `${event.created_by.name} (${event.created_by.roll_no})` },
+            ].map(({ label, value }) => (
               <div key={label} className="bg-gray-50 rounded-xl p-4">
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                  {icon} {label}
+                  {label}
                 </p>
                 <p className="text-sm font-semibold text-gray-900">{value}</p>
               </div>
@@ -85,11 +85,10 @@ export default async function EventDetailPage({
           {/* ── Points Allocation ───────────────────────────────────── */}
           <div className="rounded-xl border border-blue-100 bg-blue-50 p-5 mb-6">
             <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-3">
-              🎯 Points Allocation
+              Points Allocation
             </p>
             <div className="flex flex-wrap gap-4">
               <div className="flex items-center gap-3 bg-white rounded-lg px-4 py-3 border border-blue-100 shadow-sm">
-                <span className="text-2xl">🎟️</span>
                 <div>
                   <p className="text-xs text-gray-500 font-medium">Per Participant</p>
                   <p className="text-xl font-extrabold text-blue-600">+{event.points_per_participant} pts</p>
@@ -97,7 +96,6 @@ export default async function EventDetailPage({
               </div>
               {event.winner_points > 0 && (
                 <div className="flex items-center gap-3 bg-white rounded-lg px-4 py-3 border border-amber-100 shadow-sm">
-                  <span className="text-2xl">🏆</span>
                   <div>
                     <p className="text-xs text-gray-500 font-medium">Winner Bonus</p>
                     <p className="text-xl font-extrabold text-amber-600">+{event.winner_points} pts</p>
@@ -110,7 +108,7 @@ export default async function EventDetailPage({
           {/* Winners list (if any) */}
           {event.winners_roll_nos.length > 0 && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-              <p className="text-sm font-semibold text-amber-800 mb-2">🏆 Winners</p>
+              <p className="text-sm font-semibold text-amber-800 mb-2">Winners</p>
               <div className="flex flex-wrap gap-2">
                 {event.winners_roll_nos.map((roll) => (
                   <span key={roll} className="bg-amber-100 text-amber-800 text-xs font-mono px-2 py-1 rounded">
@@ -128,7 +126,7 @@ export default async function EventDetailPage({
                 href={`/dashboard/events/${event.id}/edit`}
                 className="bg-gray-100 text-gray-800 px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-colors"
               >
-                ✏️ Edit Event
+                Edit Event
               </Link>
 
               {isPast && (
@@ -136,7 +134,7 @@ export default async function EventDetailPage({
                   href={`/dashboard/organizer/capture?eventId=${event.id}`}
                   className="bg-green-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
                 >
-                  📸 Mark Attendance
+                  Mark Attendance
                 </Link>
               )}
             </div>

@@ -13,26 +13,73 @@ interface NavigationProps {
 }
 
 interface NavLink {
-  href: string;
+  href:  string;
   label: string;
-  icon: string;
+  icon:  React.ReactNode;
 }
+
+const IconEvents = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="2" />
+    <path d="M16 2v4M8 2v4M3 10h18" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+const IconLeaderboard = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path d="M18 20V10M12 20V4M6 20v-6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+const IconShop = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" strokeWidth="2" strokeLinejoin="round" />
+    <line x1="3" y1="6" x2="21" y2="6" strokeWidth="2" strokeLinecap="round" />
+    <path d="M16 10a4 4 0 01-8 0" strokeWidth="2" />
+  </svg>
+);
+const IconProfile = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <circle cx="12" cy="8" r="4" strokeWidth="2" />
+    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+const IconCreate = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10" strokeWidth="2" />
+    <path d="M12 8v8M8 12h8" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+const IconCamera = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" strokeWidth="2" strokeLinejoin="round" />
+    <circle cx="12" cy="13" r="4" strokeWidth="2" />
+  </svg>
+);
+const IconAdmin = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" strokeWidth="2" strokeLinejoin="round" />
+  </svg>
+);
+const IconLogout = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
 
 function getNavLinks(role?: UserRole): NavLink[] {
   const common: NavLink[] = [
-    { href: '/dashboard',             label: 'Events',       icon: '🎪' },
-    { href: '/dashboard/leaderboard', label: 'Leaderboard',  icon: '🏆' },
-    { href: '/dashboard/shop',        label: 'Shop',         icon: '🛍️' },
-    { href: '/dashboard/profile',     label: 'My Profile',   icon: '👤' },
+    { href: '/dashboard',             label: 'Events',             icon: <IconEvents /> },
+    { href: '/dashboard/leaderboard', label: 'Leaderboard',        icon: <IconLeaderboard /> },
+    { href: '/dashboard/shop',        label: 'Shop',               icon: <IconShop /> },
+    { href: '/dashboard/profile',     label: 'My Profile',         icon: <IconProfile /> },
   ];
 
   const organizerLinks: NavLink[] = [
-    { href: '/dashboard/events/create',       label: 'Create Event',       icon: '➕' },
-    { href: '/dashboard/organizer/capture',   label: 'Capture Attendance', icon: '📸' },
+    { href: '/dashboard/events/create',     label: 'Create Event',       icon: <IconCreate /> },
+    { href: '/dashboard/organizer/capture', label: 'Capture Attendance', icon: <IconCamera /> },
   ];
 
   const adminLinks: NavLink[] = [
-    { href: '/dashboard/admin', label: 'Admin Panel', icon: '⚙️' },
+    { href: '/dashboard/admin', label: 'Admin Panel', icon: <IconAdmin /> },
   ];
 
   if (role === 'organizer') return [...common, ...organizerLinks];
@@ -131,7 +178,9 @@ export default function Navigation({ userRole, userName }: NavigationProps) {
                     : 'text-gray-700 hover:bg-gray-100'
                   }`}
               >
-                <span className="text-base">{link.icon}</span>
+                <span className={isActive ? 'text-blue-700' : 'text-gray-400'}>
+                  {link.icon}
+                </span>
                 {link.label}
               </Link>
             );
@@ -144,7 +193,7 @@ export default function Navigation({ userRole, userName }: NavigationProps) {
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
           >
-            <span className="text-base">🚪</span>
+            <IconLogout />
             Sign Out
           </button>
         </div>

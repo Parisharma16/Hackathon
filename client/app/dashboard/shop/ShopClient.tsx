@@ -27,7 +27,6 @@ export default function ShopClient({ items, initialPoints }: ShopClientProps) {
             <span className="text-lg font-normal text-blue-200 ml-1.5">points</span>
           </p>
         </div>
-        <span className="text-5xl">🏅</span>
       </div>
 
       {/* Category filter */}

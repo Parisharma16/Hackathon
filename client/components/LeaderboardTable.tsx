@@ -11,9 +11,9 @@ interface LeaderboardTableProps {
 const YEARS = [1, 2, 3, 4] as const;
 
 const PODIUM_STYLE = [
-  { medal: '🥇', card: 'bg-yellow-50 border-yellow-200', order: 'order-2 sm:scale-105' },
-  { medal: '🥈', card: 'bg-gray-50   border-gray-200',   order: 'order-1' },
-  { medal: '🥉', card: 'bg-orange-50 border-orange-200', order: 'order-3' },
+  { rank: '#1', card: 'bg-yellow-50 border-yellow-200', rankColor: 'text-yellow-600', order: 'order-2 sm:scale-105' },
+  { rank: '#2', card: 'bg-gray-50   border-gray-200',   rankColor: 'text-gray-500',   order: 'order-1' },
+  { rank: '#3', card: 'bg-orange-50 border-orange-200', rankColor: 'text-orange-500', order: 'order-3' },
 ];
 
 export default function LeaderboardTable({ entries, defaultYear = 1 }: LeaderboardTableProps) {
@@ -64,7 +64,7 @@ export default function LeaderboardTable({ entries, defaultYear = 1 }: Leaderboa
                     key={entry.roll_no}
                     className={`${s.card} ${s.order} border rounded-xl p-4 text-center transition-all`}
                   >
-                    <p className="text-3xl mb-2">{s.medal}</p>
+                    <p className={`text-2xl font-extrabold mb-2 ${s.rankColor}`}>{s.rank}</p>
                     <p className="font-bold text-gray-900 text-sm leading-tight">{entry.name}</p>
                     <p className="text-xs text-gray-500 font-mono mt-0.5">{entry.roll_no}</p>
                     <p className="text-xl font-bold text-blue-600 mt-2">

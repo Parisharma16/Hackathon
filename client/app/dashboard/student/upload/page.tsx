@@ -42,13 +42,12 @@ export default function StudentUploadPage() {
         <h3 className="text-lg font-semibold mb-4 text-gray-800">Point Values</h3>
         <div className="grid grid-cols-2 gap-4">
           {[
-            { label: 'Technical',  pts: '15–30', color: 'bg-blue-50 text-blue-700',   icon: '💻' },
-            { label: 'Cultural',   pts: '10–25', color: 'bg-purple-50 text-purple-700', icon: '🎨' },
-            { label: 'Sports',     pts: '15–35', color: 'bg-green-50 text-green-700',  icon: '⚽' },
-            { label: 'Leadership', pts: '20–50', color: 'bg-orange-50 text-orange-700', icon: '🎯' },
-          ].map(({ label, pts, color, icon }) => (
+            { label: 'Technical',  pts: '15–30', color: 'bg-blue-50 text-blue-700'    },
+            { label: 'Cultural',   pts: '10–25', color: 'bg-purple-50 text-purple-700' },
+            { label: 'Sports',     pts: '15–35', color: 'bg-green-50 text-green-700'   },
+            { label: 'Leadership', pts: '20–50', color: 'bg-orange-50 text-orange-700' },
+          ].map(({ label, pts, color }) => (
             <div key={label} className={`${color} rounded-xl p-4`}>
-              <p className="text-lg mb-1">{icon}</p>
               <p className="text-xs font-semibold uppercase tracking-wide opacity-70">{label}</p>
               <p className="font-bold mt-0.5">{pts} pts</p>
             </div>
